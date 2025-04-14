@@ -1,0 +1,4 @@
+pyinstaller
+pyarmor
+pynput
+requests
