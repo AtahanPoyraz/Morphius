@@ -1,14 +1,14 @@
+import ast
+import importlib
 import os
 import re
-import sys
-import ast
-import time
-import textwrap
-import importlib
 import subprocess
+import sys
+import textwrap
+import time
 
-from config.settings import *
-from utils.console_utils import *
+from config.settings import DOWN_FLAG, ROOT_DIR, TOOL_NAME, UPPER_FLAG
+from utils.console_utils import Color, LogLevel, clear, exit, log_message
 
 class PayloadManager():
     """
@@ -17,9 +17,9 @@ class PayloadManager():
     as well as obfuscating and building standalone executables.
     """
     def __init__(self) -> None:
-        self.__payloads: dict[str, list[str]] = {}
-        self.__payload_cache: dict[str, any] = {} 
-        self.__payloads_directory: str = os.path.join(ROOT_DIR, "payloads")
+        self._payloads: dict[str, list[str]] = {}
+        self._payload_cache: dict[str, any] = {} 
+        self._payloads_directory: str = os.path.join(ROOT_DIR, "payloads")
 
     @property
     def payloads(self) -> dict[str, list[str]]:
@@ -28,8 +28,8 @@ class PayloadManager():
 
         This property returns the list of payload files loaded into memory.
         """
-        return self.__payloads
-    
+        return self._payloads
+
     @payloads.setter
     def payloads(self, value: dict[str, list[str]]) -> None:
         """
@@ -42,7 +42,7 @@ class PayloadManager():
             ValueError: If the value is not a list.
         """
         if isinstance(value, dict) and all(isinstance(v, list) for v in value.values()):
-            self.__payloads = value
+            self._payloads = value
 
         else:
             raise ValueError("Payloads must be a list.")
@@ -55,8 +55,8 @@ class PayloadManager():
         This property returns the cache containing descriptions of the payloads to avoid
         repeated file reading for the same payload.
         """
-        return self.__payload_cache
-    
+        return self._payload_cache
+
     @payload_cache.setter
     def payload_cache(self, value: dict[str, any]) -> None:
         """
@@ -69,11 +69,11 @@ class PayloadManager():
             ValueError: If the value is not a dictionary.
         """
         if isinstance(value, dict):
-            self.__payload_cache = value
+            self._payload_cache = value
 
         else:
             raise ValueError("Payload cache must be a dictionary.")
-     
+
     @property
     def payloads_directory(self) -> str:
         """
@@ -81,8 +81,8 @@ class PayloadManager():
 
         This property returns the path to the directory where payloads are stored.
         """
-        return self.__payloads_directory
-    
+        return self._payloads_directory
+
     @payloads_directory.setter
     def payloads_directory(self, value: str) -> None:
         """
@@ -95,11 +95,11 @@ class PayloadManager():
             ValueError: If the value is not a string.
         """
         if isinstance(value, str):
-            self.__payloads_directory = value
+            self._payloads_directory = value
 
         else:
             raise ValueError("Payloads directory path must be a string.")
-    
+
     def _get_payloads(self, size: int) -> dict[int, list[str]]:
         """
         Retrieves payload files from the payload directory and splits them into pages of a specified size.
@@ -112,18 +112,24 @@ class PayloadManager():
         """
         try:
             payloads: list[str] = []
-            for root, _, files in os.walk(self.__payloads_directory):
+            for root, _, files in os.walk(self._payloads_directory):
                 for file in files:
                     if os.path.isfile(os.path.join(root, file)):
-                        payloads.append(os.path.relpath(os.path.join(root, file), self.__payloads_directory))
+                        payloads.append(os.path.relpath(os.path.join(root, file), self._payloads_directory))
 
             return {index: payloads[page: page + size] for index, page in enumerate(range(0, len(payloads), size), start=1)}
-                
+
         except FileNotFoundError:
-            exit(log_level=LogLevel.ERROR, text=f"Payload directory not found: {self.payloads_directory}")
-        
+            exit(
+                log_level=LogLevel.ERROR, 
+                text=f"Payload directory not found: {self._payloads_directory}"
+            )
+
         except PermissionError:
-            exit(log_level=LogLevel.ERROR, text=f"Permission denied to access: {self.payloads_directory}")
+            exit(
+                log_level=LogLevel.ERROR, 
+                text=f"Permission denied to access: {self._payloads_directory}"
+            )
 
     def _check_payload(self, payload: str) -> bool:
         """
@@ -135,7 +141,7 @@ class PayloadManager():
         Returns:
             bool: True if the payload exists, otherwise False.
         """
-        return os.path.exists(os.path.join(self.payloads_directory, payload))
+        return os.path.exists(os.path.join(self._payloads_directory, payload))
 
     def _extract_descriptions(self, payload: str) -> list[str]:
         """
@@ -147,14 +153,17 @@ class PayloadManager():
         Returns:
             list[str]: A list of description strings found within the payload file.
         """
-        if payload in self.payload_cache:
-            return self.payload_cache[payload]
-        
+        if payload in self._payload_cache:
+            return self._payload_cache[payload]
+
         descriptions: list[str] = []
-        payload_path: str = os.path.join(self.payloads_directory, payload)
+        payload_path: str = os.path.join(self._payloads_directory, payload)
 
         if not os.path.isfile(payload_path):
-            exit(log_level=LogLevel.ERROR, text=f"Payload file does not exist: {payload_path}")
+            exit(
+                log_level=LogLevel.ERROR, 
+                text=f"Payload file does not exist: {payload_path}"
+            )
 
         try:
             with open(payload_path, "r", encoding="UTF-8") as file:
@@ -166,17 +175,23 @@ class PayloadManager():
 
             if not descriptions:
                 descriptions.append("No description available.")
-            
-            self.payload_cache[payload] = descriptions
+
+            self._payload_cache[payload] = descriptions
 
         except PermissionError:
-            exit(log_level=LogLevel.ERROR, text=f"Permission denied to read file: {payload_path}")
+            exit(
+                log_level=LogLevel.ERROR, 
+                text=f"Permission denied to read file: {payload_path}"
+            )
 
         except Exception as e:
-            exit(log_level=LogLevel.ERROR, text=f"An unexpected error occurred while reading {payload_path}: {str(e)}")
+            exit(
+                log_level=LogLevel.ERROR, 
+                text=f"An unexpected error occurred while reading {payload_path}: {str(e)}"
+            )
 
         return descriptions
-    
+
     def _extract_imports(self, payload_path: str) -> dict[str, list[str]]:
         """
         This function extracts all import statements (both standard and from module) from a Python file,
@@ -210,7 +225,7 @@ class PayloadManager():
             imported_modules.discard(None)
 
         return {"modules": list(sorted(imported_modules)), "items": list(sorted(imported_items))}
-        
+
     def _extract_placeholders(self, payload: str) -> list[str]:
         """
         Extracts and returns all unique placeholders from the payload file.
@@ -225,12 +240,12 @@ class PayloadManager():
         """
         placeholders: list[str] = []
 
-        with open(os.path.join(self.payloads_directory, payload), "r+", encoding="UTF-8") as file:
+        with open(os.path.join(self._payloads_directory, payload), "r+", encoding="UTF-8") as file:
             for line in file.readlines():
                 placeholders.extend(re.findall(r"\$\{([A-Z_]+)\}", line))
 
         return list(sorted(set(placeholders)))
-    
+
     def _load_variables(self, variables: list[str]):
         """
         Loads specified variable names as class attributes.
@@ -244,7 +259,7 @@ class PayloadManager():
         for variable in variables:
             if not hasattr(self, variable.lower()):
                 setattr(self, variable.lower(), getattr(self, variable.lower(), "NOT SET"))
-    
+
     def _validate_input(self, prompt: str, condition: callable, failure_message: str) -> str:
         """
         Prompts the user for input and validates it against the provided condition. 
@@ -262,10 +277,10 @@ class PayloadManager():
             value: str = input(prompt)
             if condition(value):
                 return value
-            
+
             else:
                 log_message(
-                    log_level=LogLevel.WARNING,
+                    log_level=LogLevel.WARNING, 
                     text=failure_message
                 )
 
@@ -286,26 +301,36 @@ class PayloadManager():
         """
         try:            
             output_path: str = os.path.join(ROOT_DIR, "dist", "generate", f"{payload_name}.py")
+
             if not os.path.exists(output_path):
                 os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
             with open(payload_source, "r", encoding="UTF-8") as p:
                 content: str = p.read()
-            
+
             for name, value in payload_variables.items():
                 content: str = content.replace(f"${{{name}}}", value)
-                        
+
             with open(output_path, "w", encoding="UTF-8") as p:
                 p.write(content)
 
         except FileNotFoundError:
-            exit(log_level=LogLevel.ERROR, text=f"Payload file '{os.path.basename(payload_source)}' not found in '{os.path.dirname(payload_source) or '.'}'")
+            exit(
+                log_level=LogLevel.ERROR, 
+                text=f"Payload file '{os.path.basename(payload_source)}' not found in '{os.path.dirname(payload_source) or '.'}'"
+            )
 
         except (OSError, PermissionError) as e:
-            exit(log_level=LogLevel.ERROR, text=f"Failed to write payload due to a file error ({payload_source}): {str(e)}")
+            exit(
+                log_level=LogLevel.ERROR, 
+                text=f"Failed to write payload due to a file error ({payload_source}): {str(e)}"
+            )
 
         except Exception as e:
-            exit(log_level=LogLevel.ERROR, text=f"An unexpected error occurred while writing payload ({payload_source}): {str(e)}")
+            exit(
+                log_level=LogLevel.ERROR, 
+                text=f"An unexpected error occurred while writing payload ({payload_source}): {str(e)}"
+            )
 
     def _obfuscate_payload(self, payload_name: str) -> None:
         """
@@ -324,23 +349,25 @@ class PayloadManager():
                 "--output", 
                 os.path.join(ROOT_DIR, "dist", "obfuscate", payload_name), 
                 os.path.join(ROOT_DIR, "dist", "generate", f"{payload_name}.py")
-                ])
-            
+            ])
+
             if result != 0:
                 log_message(
-                    log_level=LogLevel.ERROR,
+                    log_level=LogLevel.ERROR, 
                     text="Payload build failed! Please check the logs for more details."
                 )
-
                 return
-            
+
             log_message(
-                log_level=LogLevel.SUCCESS,
-                text=f"Payload obfuscation completed successfully!"
+                log_level=LogLevel.SUCCESS, 
+                text="Payload obfuscation completed successfully!"
             )
 
         except Exception as e:
-            exit(log_level=LogLevel.ERROR, text=f"An unexpected error occurred while obfuscating payload ({payload_name}): {str(e)}")
+            exit(
+                log_level=LogLevel.ERROR, 
+                text=f"An unexpected error occurred while obfuscating payload ({payload_name}): {str(e)}"
+            )
 
     def _build_payload(self, payload_name: str, payload_source: str, payload_icon: str, payload_path: str) -> None:
         """
@@ -372,19 +399,21 @@ class PayloadManager():
 
             if result != 0:
                 log_message(
-                    log_level=LogLevel.ERROR,
+                    log_level=LogLevel.ERROR, 
                     text="Payload build failed! Please check the logs for more details."
                 )
-
                 return
 
             log_message(
-                log_level=LogLevel.SUCCESS,
+                log_level=LogLevel.SUCCESS, 
                 text=f"Payload build completed successfully! \nPayload saved to: {os.path.join(ROOT_DIR, payload_path if payload_path else "dist")}"
             )
 
         except Exception as e:
-            exit(log_level=LogLevel.ERROR, text=f"An unexpected error occurred while building payload ({payload_name}): {str(e)}")
+            exit(
+                log_level=LogLevel.ERROR, 
+                text=f"An unexpected error occurred while building payload ({payload_name}): {str(e)}"
+            )
 
     def _generate_payload(self, payload_source: str, payload_name: str, payload_icon: str, payload_path: str, payload_variables: dict[str, any]) -> None:
         """
@@ -401,7 +430,10 @@ class PayloadManager():
         """
         clear()
         if not os.path.isfile(payload_source):
-            exit(log_level=LogLevel.ERROR, text=f"Payload file '{os.path.basename(payload_source)}' not found in '{payload_source}'.")
+            exit(
+                log_level=LogLevel.ERROR, 
+                text=f"Payload file '{os.path.basename(payload_source)}' not found in '{payload_source}'."
+            )
 
         self._write_payload(
             payload_name=payload_name,
@@ -483,15 +515,15 @@ class PayloadManager():
             - Shows the current page number and usage hint for navigation.
         """
         try:
-            self.payloads.clear()
-            self.payloads = self._get_payloads(size=3)
+            self._payloads.clear()
+            self._payloads = self._get_payloads(size=3)
 
-            page_payloads: list[str] = self.payloads.get(page, [])
-            if not page_payloads: 
-                return self._payloads_menu(page=page-1) if page > 1 else exit(log_level=LogLevel.ERROR, text="No payload found. Please ensure the payload exists and try again.")
+            page_payloads: list[str] = self._payloads.get(page, [])
+            if not page_payloads:
+                return self._payloads_menu(page=page - 1) if page > 1 else exit(log_level=LogLevel.ERROR, text="No payload found. Please ensure the payload exists and try again.")
 
             # Calculate the maximum width of the payload names dynamically based on their lengths
-            PAYLOAD_WIDTH: int = max([len(os.path.splitext(item)[0]) for sublist in self.payloads.values() for item in sublist])
+            PAYLOAD_WIDTH: int = max([len(os.path.splitext(item)[0]) for sublist in self._payloads.values() for item in sublist])
 
             # Add 6 to the payload width to account for additional padding and frame borders
             PAYLOAD_FRAME_WIDTH: int = (PAYLOAD_WIDTH + 6)
@@ -503,38 +535,41 @@ class PayloadManager():
             PAYLOAD_DESCRIPTION_FRAME_WIDTH: int = (PAYLOAD_DESCRIPTION_WIDTH + 2)
 
             # Calculates the global payload index based on the current page number.
-            GLOBAL_INDEX: int = ((page - 1) * len(self.payloads.get(1, [])) + 1)
+            GLOBAL_INDEX: int = ((page - 1) * len(self._payloads.get(1, [])) + 1)
 
             def wrap_text(text: str, width: int) -> list[str]:
                 """
                 Wraps a given text to the specified width using textwrap.
                 """
                 return textwrap.wrap(text, width)
-            
+
             clear()
             print(f"╔{"═" * PAYLOAD_FRAME_WIDTH}╦{"═" * (PAYLOAD_DESCRIPTION_FRAME_WIDTH)}╗")
             print(f"║{Color.BRIGHT_CYAN}{'PAYLOADS':^{PAYLOAD_FRAME_WIDTH}}{Color.RESET}║{Color.BRIGHT_CYAN}{'DESCRIPTIONS':^{PAYLOAD_DESCRIPTION_FRAME_WIDTH}}{Color.RESET}║")
             print(f"╠{"═" * PAYLOAD_FRAME_WIDTH}╬{"═" * (PAYLOAD_DESCRIPTION_FRAME_WIDTH)}╣")
-                
+
             for index, payload in enumerate(page_payloads, start=GLOBAL_INDEX):
                 wrapped_lines: list[str] = []
                 for sentence in " ".join(self._extract_descriptions(payload=payload)).split(". "):
                     wrapped_lines.extend(wrap_text((f"{sentence}." if not sentence.endswith(".") else sentence).strip(), PAYLOAD_DESCRIPTION_WIDTH))
-                
+
                 print(f"║[{Color.BRIGHT_CYAN}{index:02d}{Color.RESET}] {os.path.splitext(payload)[0]:<{PAYLOAD_WIDTH}} : {wrapped_lines[0]:<{PAYLOAD_DESCRIPTION_WIDTH}} ║")
 
                 for line in wrapped_lines[1:]:
                     print(f"║{' ' * PAYLOAD_FRAME_WIDTH}║ {f"{line.lstrip()}":<{PAYLOAD_DESCRIPTION_WIDTH}} ║")
-                
+
                 print(f"╠{"═" * PAYLOAD_FRAME_WIDTH}╬{"═" * (PAYLOAD_DESCRIPTION_FRAME_WIDTH)}╣")
-            
+
             print(f"║{Color.BRIGHT_CYAN}{f'HELP':^{PAYLOAD_FRAME_WIDTH}}{Color.RESET}║{' - Type "help" to show available commands.':<{PAYLOAD_DESCRIPTION_FRAME_WIDTH}}║")
             print(f"╠{"═" * PAYLOAD_FRAME_WIDTH}╩{"═" * (PAYLOAD_DESCRIPTION_FRAME_WIDTH)}╣")
-            print(f"║{Color.BRIGHT_CYAN}{f"PAGE {page} of {len(self.payloads.keys())}":^{PAYLOAD_FRAME_WIDTH + PAYLOAD_DESCRIPTION_FRAME_WIDTH}}{Color.RESET} ║")
+            print(f"║{Color.BRIGHT_CYAN}{f"PAGE {page} of {len(self._payloads.keys())}":^{PAYLOAD_FRAME_WIDTH + PAYLOAD_DESCRIPTION_FRAME_WIDTH}}{Color.RESET} ║")
             print(f"╚{"═" * PAYLOAD_FRAME_WIDTH}═{"═" * (PAYLOAD_DESCRIPTION_FRAME_WIDTH)}╝")
 
-        except ValueError as e:
-            exit(log_level=LogLevel.ERROR, text="No payload found. Please ensure the payload exists and try again.")
+        except ValueError:
+            exit(
+                log_level=LogLevel.ERROR, 
+                text="No payload found. Please ensure the payload exists and try again."
+            )
 
     def select_payload(self) -> None:
         """
@@ -561,14 +596,13 @@ class PayloadManager():
                 option: str = input(DOWN_FLAG)
                 match option:
                     case option if option.startswith("use") and (len(option.split(" ")) > 1):
-                        all_payloads: list[str] = [item for sublist in self.payloads.values() for item in sublist]
+                        all_payloads: list[str] = [item for sublist in self._payloads.values() for item in sublist]
 
                         if option.split(" ")[1].isdigit() and int(option.split(" ")[1]) > 0:
                             if 0 <= int(option.split(" ")[1]) - 1 < len(all_payloads):
                                 self.prepare_payload(
-                                    payload=os.path.join(self.payloads_directory, all_payloads[int(option.split(" ")[1]) - 1])
+                                    payload=os.path.join(self._payloads_directory, all_payloads[int(option.split(" ")[1]) - 1])
                                 )
-
                                 break
 
                             else:
@@ -576,20 +610,18 @@ class PayloadManager():
                                     LogLevel=LogLevel.WARNING, 
                                     text="Invalid payload number. Please try again."
                                 )
-
                                 time.sleep(1.25)
-                                continue   
-                             
+                                continue
+
                         elif " ".join(option.split(" ")[1:]).strip() in [os.path.splitext(payload)[0] for payload in all_payloads]:
                             self.prepare_payload(
                                 payload=os.path.join(
-                                    self.payloads_directory, 
+                                    self._payloads_directory, 
                                     next(
                                         (payload for payload in all_payloads if os.path.splitext(payload)[0] == " ".join(option.split(" ")[1:]).strip()), None
                                     )
                                 )
                             )
-
                             break
 
                         else:
@@ -597,12 +629,11 @@ class PayloadManager():
                                 log_level=LogLevel.WARNING, 
                                 text="Invalid payload option. Please try again."
                             )
-
                             time.sleep(1.25)
                             continue  
 
                     case option if option.startswith("page") and (len(option.split(" ")) > 1):
-                        if not((int(option.split(" ")[1]) > len(self.payloads)) or (int(option.split(" ")[1]) == 0)):
+                        if not ((int(option.split(" ")[1]) > len(self._payloads)) or (int(option.split(" ")[1]) == 0)):
                             page = int(option.split(" ")[1])
 
                         else:
@@ -610,14 +641,13 @@ class PayloadManager():
                                 log_level=LogLevel.WARNING,
                                 text="Invalid page number. Please try again."
                             )
-
                             time.sleep(1.25)  
                             continue
 
                     case option if option.lower() == "help":
                         self._help()
                         continue
-                            
+
                     case option if option.lower() == "exit":
                         clear()
                         print(f"Signed out of {TOOL_NAME}")
@@ -628,7 +658,6 @@ class PayloadManager():
                             log_level=LogLevel.WARNING,
                             text="Invalid option. Please try again."
                         )
-
                         time.sleep(1.25)  
                         continue
 
@@ -637,12 +666,14 @@ class PayloadManager():
                     log_level=LogLevel.WARNING,
                     text="Invalid payload number. Please try again."
                 )
-
                 time.sleep(1.25)  
                 continue
 
-            except Exception as e:
-                exit(log_level=LogLevel.ERROR, text="An error occurred while selecting option.")
+            except Exception:
+                exit(
+                    log_level=LogLevel.ERROR, 
+                    text="An error occurred while selecting option."
+                )
 
     def _preparation_menu(self, payload: str, variables: list[str]) -> None:
         """
@@ -663,10 +694,10 @@ class PayloadManager():
             """Truncate text to a specific length and append '...' if necessary."""
             if len(text) <= max_length:
                 return text
-            
-            return text[:max_length-3] + "..." if max_length > 3 else text[:max_length]
 
-        payload: str = os.path.relpath(payload, self.payloads_directory).rpartition(".")[0]
+            return text[:max_length - 3] + "..." if max_length > 3 else text[:max_length]
+
+        payload: str = os.path.relpath(payload, self._payloads_directory).rpartition(".")[0]
 
         # VARIABLE_WIDTH: Maximum length of variable names in variables and "PAYLOAD".
         VARIABLE_WIDTH: int = max([len(variable) for variable in variables] + [len("PAYLOAD")])
@@ -684,11 +715,11 @@ class PayloadManager():
         print(f"╔{"═" * VARIABLE_FRAME_WIDTH}═{"═" * VALUE_FRAME_WIDTH}╗")
         print(f"║{Color.BRIGHT_CYAN}{TOOL_NAME:^{VARIABLE_FRAME_WIDTH + VALUE_FRAME_WIDTH}}{Color.RESET} ║")
         print(f"╠{"═" * VARIABLE_FRAME_WIDTH}╦{"═" * VALUE_FRAME_WIDTH}╣")
-        
+
         for variable in variables:
             truncate_var: str = truncate_text(getattr(self, variable.lower()), len(payload) if len(payload) >= VALUE_WIDTH else VALUE_WIDTH)
             print(f"║ {Color.BRIGHT_CYAN}{variable:<{VARIABLE_WIDTH}}{Color.RESET} : {truncate_var:<{VALUE_WIDTH}} ║")
-        
+
         print(f"╠{"═" * VARIABLE_FRAME_WIDTH}╬{"═" * VALUE_FRAME_WIDTH}╣")
         print(f"║ {Color.BRIGHT_CYAN}{"PAYLOAD":<{VARIABLE_WIDTH}}{Color.RESET} : {payload:<{VALUE_WIDTH}} ║")
         print(f"╠{"═" * VARIABLE_FRAME_WIDTH}╩{"═" * VALUE_FRAME_WIDTH}╣")
@@ -703,7 +734,7 @@ class PayloadManager():
             print(f"║{description:<{VARIABLE_FRAME_WIDTH + VALUE_FRAME_WIDTH}} ║")
 
         print(f"╚{"═" * VARIABLE_FRAME_WIDTH}═{"═" * VALUE_FRAME_WIDTH}╝")
-    
+
     def prepare_payload(self, payload: str) -> None:
         """
         Prepares the selected payload and handles user interactions in a loop until 'exit' is selected.
@@ -720,11 +751,17 @@ class PayloadManager():
         while True:
             variables: list[str] = self._extract_placeholders(payload)
             if len(variables) == 0:
-                exit(log_level=LogLevel.ERROR, text=f"Payload ({payload}) is not in the appropriate format.")
+                exit(
+                    log_level=LogLevel.ERROR, 
+                    text=f"Payload ({payload}) is not in the appropriate format."
+                )
 
             self._load_variables(variables)
             if not self._check_payload(payload):
-                exit(log_level=LogLevel.ERROR, text=f"Payload ({payload}) is missing or access is blocked.")
+                exit(
+                    log_level=LogLevel.ERROR, 
+                    text=f"Payload ({payload}) is missing or access is blocked."
+                )
 
             self._preparation_menu(payload, variables)
 
@@ -736,7 +773,7 @@ class PayloadManager():
                         if option.startswith(f"set {variable.lower()}"):
                             setattr(self, variable.lower(), option.removeprefix(f"set {variable.lower()}").strip())
                             break
-                        
+
                 case option if option.lower().strip() == "generate":
                     payload_name: str = self._validate_input(
                         prompt=f"{Color.BRIGHT_GREEN}{LogLevel.SUCCESS}{Color.RESET} Enter the name for payload: ",
@@ -749,7 +786,7 @@ class PayloadManager():
                         condition=lambda x: x == "" or os.path.exists(x),
                         failure_message="Payload icon file not found in specified path."
                     ).strip()
-                    
+
                     payload_path: str = self._validate_input(
                         prompt=f"{Color.BRIGHT_GREEN}{LogLevel.SUCCESS}{Color.RESET} Enter the path for payload (optional): ",
                         condition=lambda x: x == "" or (os.path.exists(x) and os.path.isdir(x)),
@@ -763,9 +800,8 @@ class PayloadManager():
                         payload_path=payload_path,
                         payload_variables={variable: getattr(self, variable.lower()) for variable in variables}
                     )
-
                     break
-        
+
                 case option if option.lower().strip() == "back":
                     getattr(importlib.import_module('main'), "Application")().main()
                     break
@@ -780,7 +816,5 @@ class PayloadManager():
                         log_level=LogLevel.WARNING, 
                         text="Please enter a valid input."
                     )
-
                     time.sleep(1.25)
                     continue
-                

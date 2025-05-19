@@ -1,6 +1,18 @@
-from utils.console_utils import *
-from utils.dependency_utils import *
-from manager.payload_manager import *
+import os
+import time
+
+from config.settings import (
+    AUTHOR,
+    PYTHON_VERSION,
+    TOOL_NAME,
+    TOOL_VERSION,
+    LogLevel,
+)
+
+from manager.payload_manager import PayloadManager
+from utils.console_utils import clear, exit, interrupt_handler, log_message
+from utils.dependency_utils import check_requirements
+
 
 class Morphius(PayloadManager):
     def __init__(self) -> None:
@@ -42,12 +54,14 @@ class Morphius(PayloadManager):
                     log_level=LogLevel.SUCCESS, 
                     text="All requirements are satisfied."
                 )
-
                 time.sleep(1.25)
                 return
-                
+
         except Exception as e:
-            exit(log_level=LogLevel.ERROR, text=f"An error occurred while checking requirements ({str(e)})")
+            exit(
+                log_level=LogLevel.ERROR, 
+                text=f"An error occurred while checking requirements ({str(e)})"
+            )
 
     @interrupt_handler
     def main(self):
@@ -59,12 +73,18 @@ class Morphius(PayloadManager):
         """
         try:
             if not os.path.exists(self.payloads_directory):
-                exit(log_level=LogLevel.ERROR, text=f"Payload directory does not exist: {self.payloads_directory}")
+                exit(
+                    log_level=LogLevel.ERROR, 
+                    text=f"Payload directory does not exist: {self.payloads_directory}"
+                )
 
             self.select_payload()
-            
+
         except Exception as e:
-            exit(log_level=LogLevel.ERROR, text=f"An error occurred while starting program ({str(e)})")
+            exit(
+                log_level=LogLevel.ERROR, 
+                text=f"An error occurred while starting program ({str(e)})"
+            )
 
     @staticmethod
     def Run() -> None:
@@ -80,4 +100,3 @@ class Morphius(PayloadManager):
 
 if __name__ == "__main__":
     Morphius.Run()
-    

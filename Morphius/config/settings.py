@@ -1,6 +1,6 @@
+import getpass
 import os
 import platform
-import getpass
 from enum import Enum
 
 class Color(Enum):
@@ -42,22 +42,22 @@ class Color(Enum):
     Example:
         print(f"\033[{Color.BRIGHT_GREEN.value}mSuccess!\033[0m")
     """
-    RED:     str = "\033[31m"    
-    GREEN:   str = "\033[32m"    
-    YELLOW:  str = "\033[33m" 
-    BLUE:    str = "\033[34m" 
-    MAGENTA: str = "\033[35m" 
-    CYAN:    str = "\033[36m" 
-    WHITE:   str = "\033[37m" 
-    RESET:   str = "\033[0m" 
+    RED: str = "\033[31m"
+    GREEN: str = "\033[32m"
+    YELLOW: str = "\033[33m"
+    BLUE: str = "\033[34m"
+    MAGENTA: str = "\033[35m"
+    CYAN: str = "\033[36m"
+    WHITE: str = "\033[37m"
+    RESET: str = "\033[0m"
 
-    BRIGHT_RED:     str = "\033[91m" 
-    BRIGHT_GREEN:   str = "\033[92m" 
-    BRIGHT_YELLOW:  str = "\033[93m" 
-    BRIGHT_BLUE:    str = "\033[94m" 
-    BRIGHT_MAGENTA: str = "\033[95m" 
-    BRIGHT_CYAN:    str = "\033[96m" 
-    BRIGHT_WHITE:   str = "\033[97m" 
+    BRIGHT_RED: str = "\033[91m"
+    BRIGHT_GREEN: str = "\033[92m"
+    BRIGHT_YELLOW: str = "\033[93m"
+    BRIGHT_BLUE: str = "\033[94m"
+    BRIGHT_MAGENTA: str = "\033[95m"
+    BRIGHT_CYAN: str = "\033[96m"
+    BRIGHT_WHITE: str = "\033[97m"
 
     def __str__(self):
         return self.value
@@ -88,15 +88,15 @@ class LogLevel(Enum):
         print(f"{LogLevel.ERROR.value} Error!")
     """
     SUCCESS: str = "[+]"
-    DEBUG:   str = "[*]"
-    INFO:    str = "[?]"   
-    WARNING: str = "[!]" 
-    NOTICE:  str = "[#]"
-    ERROR:   str = "[X]"
+    DEBUG: str = "[*]"
+    INFO: str = "[?]"
+    WARNING: str = "[!]"
+    NOTICE: str = "[#]"
+    ERROR: str = "[X]"
 
     def __str__(self):
         return self.value
-        
+
 # The name of the tool being used.
 TOOL_NAME: str = "Morphius"
 
@@ -130,4 +130,5 @@ PYTHON_VERSION: str = platform.python_version()
 
 # The flag or prompt string that appears when the application is waiting for user input.
 UPPER_FLAG: str = f"╭{Color.BRIGHT_CYAN}─{Color.CYAN}─{Color.BRIGHT_BLUE}{{{Color.BRIGHT_CYAN}{TOOL_NAME}{Color.BRIGHT_BLUE}}}{Color.RESET}"
+
 DOWN_FLAG: str = f"╰{Color.BRIGHT_CYAN}─{Color.CYAN}─{Color.BRIGHT_BLUE}>{Color.RESET} "

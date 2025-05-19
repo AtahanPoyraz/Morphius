@@ -1,6 +1,7 @@
+import os
 import sys
 
-from config.settings import *
+from config.settings import OS_NAME, TOOL_NAME, Color, LogLevel
 
 def clear() -> None:
     """
@@ -78,8 +79,8 @@ def interrupt_handler(func: callable) -> callable:
     """
     def wrapper(*args, **kwargs):
         try:
-            return func(*args, **kwargs)    
-        
+            return func(*args, **kwargs)
+
         except KeyboardInterrupt:
             clear()
             print(f"Signed out of {TOOL_NAME}")
@@ -97,13 +98,13 @@ def exit(log_level: LogLevel, text: str) -> None:
     Exits the program with a status code:
         - 0 for non-error log levels 
         - 1 for ERROR log level.
-    
+
     This function is a central exit handler that ensures consistent logging and graceful program termination.
     """
     clear()
     log_message(
-        log_level=log_level, 
+        log_level=log_level,
         text=text
     )
-    
+
     sys.exit(1 if log_level == LogLevel.ERROR else 0)
