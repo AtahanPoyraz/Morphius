@@ -669,10 +669,10 @@ class PayloadManager():
                 time.sleep(1.25)  
                 continue
 
-            except Exception:
+            except Exception as e:
                 exit(
                     log_level=LogLevel.ERROR, 
-                    text="An error occurred while selecting option."
+                    text=f"An error occurred while selecting option."
                 )
 
     def _preparation_menu(self, payload: str, variables: list[str]) -> None:
@@ -803,7 +803,7 @@ class PayloadManager():
                     break
 
                 case option if option.lower().strip() == "back":
-                    getattr(importlib.import_module('main'), "Application")().main()
+                    getattr(importlib.import_module('main'), "Morphius")().main()
                     break
 
                 case option if option.lower().strip() == "exit":
