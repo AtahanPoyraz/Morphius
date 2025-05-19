@@ -13,7 +13,6 @@ from manager.payload_manager import PayloadManager
 from utils.console_utils import clear, exit, interrupt_handler, log_message
 from utils.dependency_utils import check_requirements
 
-
 class Morphius(PayloadManager):
     def __init__(self) -> None:
         super().__init__()
