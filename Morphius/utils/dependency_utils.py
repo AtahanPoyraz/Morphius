@@ -8,7 +8,7 @@ from typing import Iterable
 
 from config.settings import ROOT_DIR, LogLevel
 
-from utils.console_utils import log_message
+from utils.console_utils import exit, log_message
 
 def get_requirements() -> list[str] | list:
     """
@@ -148,7 +148,7 @@ def install_requirements(missing_libraries: list[str]) -> None:
             )
 
         except subprocess.CalledProcessError as e:
-            log_message(
+            exit(
                 log_level=LogLevel.ERROR,
                 text=f"Failed to install {library}. Error: {str(e)}"
             )

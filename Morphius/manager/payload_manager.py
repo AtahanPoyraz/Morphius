@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
+
 import ast
 import importlib
 import os
 import re
 import subprocess
-import sys
 import textwrap
 import time
 
@@ -649,9 +650,10 @@ class PayloadManager():
                         continue
 
                     case option if option.lower() == "exit":
-                        clear()
-                        print(f"Signed out of {TOOL_NAME}")
-                        sys.exit(0)
+                        exit(
+                            log_level=LogLevel.NOTICE,
+                            text=f"Signed out of {TOOL_NAME}."
+                        )
 
                     case _:
                         log_message(
@@ -669,10 +671,10 @@ class PayloadManager():
                 time.sleep(1.25)  
                 continue
 
-            except Exception as e:
+            except Exception:
                 exit(
                     log_level=LogLevel.ERROR, 
-                    text=f"An error occurred while selecting option."
+                    text="An error occurred while selecting option."
                 )
 
     def _preparation_menu(self, payload: str, variables: list[str]) -> None:
@@ -807,9 +809,10 @@ class PayloadManager():
                     break
 
                 case option if option.lower().strip() == "exit":
-                    clear()
-                    print(f"Signed out of {TOOL_NAME}.")
-                    sys.exit(0)
+                    exit(
+                        log_level=LogLevel.NOTICE,
+                        text=f"Signed out of {TOOL_NAME}."
+                    )
 
                 case _:
                     log_message(

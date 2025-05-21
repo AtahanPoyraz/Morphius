@@ -43,22 +43,22 @@ def log_message(log_level: LogLevel, text: str) -> None:
     """
     match log_level:
         case LogLevel.SUCCESS:
-            print(f"{Color.BRIGHT_GREEN}{log_level.value}{Color.RESET} {text}")
+            print(f"{Color.BRIGHT_GREEN}{log_level}{Color.RESET} {text}")
 
         case LogLevel.WARNING:
-            print(f"{Color.BRIGHT_YELLOW}{log_level.value}{Color.RESET} {text}")
+            print(f"{Color.BRIGHT_YELLOW}{log_level}{Color.RESET} {text}")
 
         case LogLevel.ERROR:
-            print(f"{Color.BRIGHT_RED}{log_level.value}{Color.RESET} {text}")
+            print(f"{Color.BRIGHT_RED}{log_level}{Color.RESET} {text}")
 
         case LogLevel.DEBUG:
-            print(f"{Color.BRIGHT_CYAN}{log_level.value}{Color.RESET} {text}")
+            print(f"{Color.BRIGHT_CYAN}{log_level}{Color.RESET} {text}")
 
         case LogLevel.INFO:
-            print(f"{Color.BRIGHT_MAGENTA}{log_level.value}{Color.RESET} {text}")
+            print(f"{Color.BRIGHT_MAGENTA}{log_level}{Color.RESET} {text}")
 
         case LogLevel.NOTICE:
-            print(f"{Color.BRIGHT_BLUE}{log_level.value}{Color.RESET} {text}")
+            print(f"{Color.BRIGHT_BLUE}{log_level}{Color.RESET} {text}")
 
         case _:
             raise ValueError(f"Unsupported log level: {log_level}")
@@ -82,8 +82,10 @@ def interrupt_handler(func: callable) -> callable:
             return func(*args, **kwargs)
 
         except KeyboardInterrupt:
-            clear()
-            print(f"Signed out of {TOOL_NAME}")
+            exit(
+                log_level=LogLevel.NOTICE,
+                text=f"Signed out of {TOOL_NAME}"
+            )
 
     return wrapper
 
