@@ -1,8 +1,5 @@
 # .PHONY targets that do not correspond to actual files
-.PHONY: help run install uninstall clean reinstall info
-
-# Default goal
-.DEFAULT_GOAL := run
+.PHONY: help install uninstall clean reinstall info
 
 # Display help message with all targets
 help:
@@ -14,11 +11,6 @@ help:
 	@echo "  reinstall - Reinstall dependencies after cleaning"
 	@echo "  info      - Show system info (Python & pip version)"
 	@echo "  help      - Show this help message"
-
-# Run the main script
-run:
-	@echo "Running the main script..."
-	python3 -u main.py
 
 # Install project dependencies
 install:

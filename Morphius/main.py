@@ -42,8 +42,8 @@ class Morphius(PayloadManager):
                     log_level=LogLevel.WARNING,
                     text=(
                         f"Missing libraries detected: {', '.join(missing_libraries)}\n"
-                        f"{" " * 4}Run: pip install {' '.join(missing_libraries)}\n"
-                        f"{" " * 4}Or: make install (if supported)"
+                        f"    Run: pip install {' '.join(missing_libraries)}\n"
+                        f"    Or: make install (if supported)"
                     )
                 )
 
