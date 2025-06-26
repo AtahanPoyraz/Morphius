@@ -77,7 +77,7 @@ class Morphius(PayloadManager):
                     text=f"Payload directory does not exist: {self.payloads_directory}"
                 )
 
-            self.select_payload()
+            self.execute()
 
         except Exception as e:
             exit(

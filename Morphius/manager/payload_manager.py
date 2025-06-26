@@ -572,7 +572,7 @@ class PayloadManager():
                 text="No payload found. Please ensure the payload exists and try again."
             )
 
-    def select_payload(self) -> None:
+    def execute(self) -> None:
         """
         Handles the user interface for selecting a payload or navigating the payload menu.
 
