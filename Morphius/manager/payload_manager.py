@@ -18,9 +18,9 @@ class PayloadManager():
     as well as obfuscating and building standalone executables.
     """
     def __init__(self) -> None:
-        self._payloads: dict[str, list[str]] = {}
-        self._payload_cache: dict[str, any] = {} 
-        self._payloads_directory: str = os.path.join(ROOT_DIR, "payloads")
+        self.__payloads: dict[str, list[str]] = {}
+        self.__payload_cache: dict[str, any] = {} 
+        self.__payloads_directory: str = os.path.join(ROOT_DIR, "payloads")
 
     @property
     def payloads(self) -> dict[str, list[str]]:
@@ -29,7 +29,7 @@ class PayloadManager():
 
         This property returns the list of payload files loaded into memory.
         """
-        return self._payloads
+        return self.__payloads
 
     @payloads.setter
     def payloads(self, value: dict[str, list[str]]) -> None:
@@ -43,7 +43,7 @@ class PayloadManager():
             ValueError: If the value is not a list.
         """
         if isinstance(value, dict) and all(isinstance(v, list) for v in value.values()):
-            self._payloads = value
+            self.__payloads = value
 
         else:
             raise ValueError("Payloads must be a list.")
@@ -56,7 +56,7 @@ class PayloadManager():
         This property returns the cache containing descriptions of the payloads to avoid
         repeated file reading for the same payload.
         """
-        return self._payload_cache
+        return self.__payload_cache
 
     @payload_cache.setter
     def payload_cache(self, value: dict[str, any]) -> None:
@@ -70,7 +70,7 @@ class PayloadManager():
             ValueError: If the value is not a dictionary.
         """
         if isinstance(value, dict):
-            self._payload_cache = value
+            self.__payload_cache = value
 
         else:
             raise ValueError("Payload cache must be a dictionary.")
@@ -82,7 +82,7 @@ class PayloadManager():
 
         This property returns the path to the directory where payloads are stored.
         """
-        return self._payloads_directory
+        return self.__payloads_directory
 
     @payloads_directory.setter
     def payloads_directory(self, value: str) -> None:
@@ -96,12 +96,12 @@ class PayloadManager():
             ValueError: If the value is not a string.
         """
         if isinstance(value, str):
-            self._payloads_directory = value
+            self.__payloads_directory = value
 
         else:
             raise ValueError("Payloads directory path must be a string.")
 
-    def _get_payloads(self, size: int) -> dict[int, list[str]]:
+    def _get__payloads(self, size: int) -> dict[int, list[str]]:
         """
         Retrieves payload files from the payload directory and splits them into pages of a specified size.
 
@@ -113,23 +113,23 @@ class PayloadManager():
         """
         try:
             payloads: list[str] = []
-            for root, _, files in os.walk(self._payloads_directory):
+            for root, _, files in os.walk(self.__payloads_directory):
                 for file in files:
                     if os.path.isfile(os.path.join(root, file)):
-                        payloads.append(os.path.relpath(os.path.join(root, file), self._payloads_directory))
+                        payloads.append(os.path.relpath(os.path.join(root, file), self.__payloads_directory))
 
             return {index: payloads[page: page + size] for index, page in enumerate(range(0, len(payloads), size), start=1)}
 
         except FileNotFoundError:
             exit(
                 log_level=LogLevel.ERROR, 
-                text=f"Payload directory not found: {self._payloads_directory}"
+                text=f"Payload directory not found: {self.__payloads_directory}"
             )
 
         except PermissionError:
             exit(
                 log_level=LogLevel.ERROR, 
-                text=f"Permission denied to access: {self._payloads_directory}"
+                text=f"Permission denied to access: {self.__payloads_directory}"
             )
 
     def _check_payload(self, payload: str) -> bool:
@@ -142,7 +142,7 @@ class PayloadManager():
         Returns:
             bool: True if the payload exists, otherwise False.
         """
-        return os.path.exists(os.path.join(self._payloads_directory, payload))
+        return os.path.exists(os.path.join(self.__payloads_directory, payload))
 
     def _extract_descriptions(self, payload: str) -> list[str]:
         """
@@ -154,11 +154,11 @@ class PayloadManager():
         Returns:
             list[str]: A list of description strings found within the payload file.
         """
-        if payload in self._payload_cache:
-            return self._payload_cache[payload]
+        if payload in self.__payload_cache:
+            return self.__payload_cache[payload]
 
         descriptions: list[str] = []
-        payload_path: str = os.path.join(self._payloads_directory, payload)
+        payload_path: str = os.path.join(self.__payloads_directory, payload)
 
         if not os.path.isfile(payload_path):
             exit(
@@ -177,7 +177,7 @@ class PayloadManager():
             if not descriptions:
                 descriptions.append("No description available.")
 
-            self._payload_cache[payload] = descriptions
+            self.__payload_cache[payload] = descriptions
 
         except PermissionError:
             exit(
@@ -241,7 +241,7 @@ class PayloadManager():
         """
         placeholders: list[str] = []
 
-        with open(os.path.join(self._payloads_directory, payload), "r+", encoding="UTF-8") as file:
+        with open(os.path.join(self.__payloads_directory, payload), "r+", encoding="UTF-8") as file:
             for line in file.readlines():
                 placeholders.extend(re.findall(r"\$\{([A-Z_]+)\}", line))
 
@@ -495,7 +495,7 @@ class PayloadManager():
         print(f"╚{"═" * COMMAND_FRAME_WIDTH}╩{"═" * DESCRIPTION_FRAME_WIDTH}╝")
         input(f"{Color.BRIGHT_CYAN}{">> Press ENTER to continue <<":^{COMMAND_FRAME_WIDTH + DESCRIPTION_FRAME_WIDTH}}{Color.RESET}\n")
 
-    def _payloads_menu(self, page: int) -> None:
+    def __payloads_menu(self, page: int) -> None:
         """
         Displays the payloads menu in a formatted table, showing payload names and descriptions.
 
@@ -516,15 +516,15 @@ class PayloadManager():
             - Shows the current page number and usage hint for navigation.
         """
         try:
-            self._payloads.clear()
-            self._payloads = self._get_payloads(size=3)
+            self.__payloads.clear()
+            self.__payloads = self._get__payloads(size=3)
 
-            page_payloads: list[str] = self._payloads.get(page, [])
-            if not page_payloads:
-                return self._payloads_menu(page=page - 1) if page > 1 else exit(log_level=LogLevel.ERROR, text="No payload found. Please ensure the payload exists and try again.")
+            page__payloads: list[str] = self.__payloads.get(page, [])
+            if not page__payloads:
+                return self.__payloads_menu(page=page - 1) if page > 1 else exit(log_level=LogLevel.ERROR, text="No payload found. Please ensure the payload exists and try again.")
 
             # Calculate the maximum width of the payload names dynamically based on their lengths
-            PAYLOAD_WIDTH: int = max([len(os.path.splitext(item)[0]) for sublist in self._payloads.values() for item in sublist])
+            PAYLOAD_WIDTH: int = max([len(os.path.splitext(item)[0]) for sublist in self.__payloads.values() for item in sublist])
 
             # Add 6 to the payload width to account for additional padding and frame borders
             PAYLOAD_FRAME_WIDTH: int = (PAYLOAD_WIDTH + 6)
@@ -536,7 +536,7 @@ class PayloadManager():
             PAYLOAD_DESCRIPTION_FRAME_WIDTH: int = (PAYLOAD_DESCRIPTION_WIDTH + 2)
 
             # Calculates the global payload index based on the current page number.
-            GLOBAL_INDEX: int = ((page - 1) * len(self._payloads.get(1, [])) + 1)
+            GLOBAL_INDEX: int = ((page - 1) * len(self.__payloads.get(1, [])) + 1)
 
             def wrap_text(text: str, width: int) -> list[str]:
                 """
@@ -549,7 +549,7 @@ class PayloadManager():
             print(f"║{Color.BRIGHT_CYAN}{'PAYLOADS':^{PAYLOAD_FRAME_WIDTH}}{Color.RESET}║{Color.BRIGHT_CYAN}{'DESCRIPTIONS':^{PAYLOAD_DESCRIPTION_FRAME_WIDTH}}{Color.RESET}║")
             print(f"╠{"═" * PAYLOAD_FRAME_WIDTH}╬{"═" * (PAYLOAD_DESCRIPTION_FRAME_WIDTH)}╣")
 
-            for index, payload in enumerate(page_payloads, start=GLOBAL_INDEX):
+            for index, payload in enumerate(page__payloads, start=GLOBAL_INDEX):
                 wrapped_lines: list[str] = []
                 for sentence in " ".join(self._extract_descriptions(payload=payload)).split(". "):
                     wrapped_lines.extend(wrap_text((f"{sentence}." if not sentence.endswith(".") else sentence).strip(), PAYLOAD_DESCRIPTION_WIDTH))
@@ -563,7 +563,7 @@ class PayloadManager():
 
             print(f"║{Color.BRIGHT_CYAN}{f'HELP':^{PAYLOAD_FRAME_WIDTH}}{Color.RESET}║{' - Type "help" to show available commands.':<{PAYLOAD_DESCRIPTION_FRAME_WIDTH}}║")
             print(f"╠{"═" * PAYLOAD_FRAME_WIDTH}╩{"═" * (PAYLOAD_DESCRIPTION_FRAME_WIDTH)}╣")
-            print(f"║{Color.BRIGHT_CYAN}{f"PAGE {page} of {len(self._payloads.keys())}":^{PAYLOAD_FRAME_WIDTH + PAYLOAD_DESCRIPTION_FRAME_WIDTH}}{Color.RESET} ║")
+            print(f"║{Color.BRIGHT_CYAN}{f"PAGE {page} of {len(self.__payloads.keys())}":^{PAYLOAD_FRAME_WIDTH + PAYLOAD_DESCRIPTION_FRAME_WIDTH}}{Color.RESET} ║")
             print(f"╚{"═" * PAYLOAD_FRAME_WIDTH}═{"═" * (PAYLOAD_DESCRIPTION_FRAME_WIDTH)}╝")
 
         except ValueError:
@@ -591,18 +591,18 @@ class PayloadManager():
         page: int = 1
         while True:
             try:
-                self._payloads_menu(page=page)
+                self.__payloads_menu(page=page)
 
                 print(UPPER_FLAG)
                 option: str = input(DOWN_FLAG)
                 match option:
                     case option if option.startswith("use") and (len(option.split(" ")) > 1):
-                        all_payloads: list[str] = [item for sublist in self._payloads.values() for item in sublist]
+                        all__payloads: list[str] = [item for sublist in self.__payloads.values() for item in sublist]
 
                         if option.split(" ")[1].isdigit() and int(option.split(" ")[1]) > 0:
-                            if 0 <= int(option.split(" ")[1]) - 1 < len(all_payloads):
+                            if 0 <= int(option.split(" ")[1]) - 1 < len(all__payloads):
                                 self.prepare_payload(
-                                    payload=os.path.join(self._payloads_directory, all_payloads[int(option.split(" ")[1]) - 1])
+                                    payload=os.path.join(self.__payloads_directory, all__payloads[int(option.split(" ")[1]) - 1])
                                 )
                                 break
 
@@ -614,12 +614,12 @@ class PayloadManager():
                                 time.sleep(1.25)
                                 continue
 
-                        elif " ".join(option.split(" ")[1:]).strip() in [os.path.splitext(payload)[0] for payload in all_payloads]:
+                        elif " ".join(option.split(" ")[1:]).strip() in [os.path.splitext(payload)[0] for payload in all__payloads]:
                             self.prepare_payload(
                                 payload=os.path.join(
-                                    self._payloads_directory, 
+                                    self.__payloads_directory, 
                                     next(
-                                        (payload for payload in all_payloads if os.path.splitext(payload)[0] == " ".join(option.split(" ")[1:]).strip()), None
+                                        (payload for payload in all__payloads if os.path.splitext(payload)[0] == " ".join(option.split(" ")[1:]).strip()), None
                                     )
                                 )
                             )
@@ -634,7 +634,7 @@ class PayloadManager():
                             continue  
 
                     case option if option.startswith("page") and (len(option.split(" ")) > 1):
-                        if not ((int(option.split(" ")[1]) > len(self._payloads)) or (int(option.split(" ")[1]) == 0)):
+                        if not ((int(option.split(" ")[1]) > len(self.__payloads)) or (int(option.split(" ")[1]) == 0)):
                             page = int(option.split(" ")[1])
 
                         else:
@@ -699,7 +699,7 @@ class PayloadManager():
 
             return text[:max_length - 3] + "..." if max_length > 3 else text[:max_length]
 
-        payload: str = os.path.relpath(payload, self._payloads_directory).rpartition(".")[0]
+        payload: str = os.path.relpath(payload, self.__payloads_directory).rpartition(".")[0]
 
         # VARIABLE_WIDTH: Maximum length of variable names in variables and "PAYLOAD".
         VARIABLE_WIDTH: int = max([len(variable) for variable in variables] + [len("PAYLOAD")])
