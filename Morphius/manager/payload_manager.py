@@ -805,7 +805,7 @@ class PayloadManager():
                     break
 
                 case option if option.lower().strip() == "back":
-                    getattr(importlib.import_module('main'), "Morphius")().main()
+                    getattr(importlib.import_module('morphius'), "Morphius")().main()
                     break
 
                 case option if option.lower().strip() == "exit":

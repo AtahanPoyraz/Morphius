@@ -4,7 +4,6 @@
 # Display help message with all targets
 help:
 	@echo "Makefile commands:"
-	@echo "  run       - Run the main.py script"
 	@echo "  install   - Install project dependencies"
 	@echo "  uninstall - Uninstall project dependencies"
 	@echo "  clean     - Clean up pyc files and build directories"
