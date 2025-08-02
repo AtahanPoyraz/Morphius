@@ -9,7 +9,7 @@ import textwrap
 import time
 
 from config.settings import DOWN_FLAG, ROOT_DIR, TOOL_NAME, UPPER_FLAG
-from utils.console_utils import Color, LogLevel, clear, exit, log_message
+from utils.console_utils import Color, LogLevel, clear, exit, log_message, task_handler
 
 class PayloadManager():
     """
@@ -392,7 +392,7 @@ class PayloadManager():
                 "--workpath", os.path.join(ROOT_DIR, "dist", "build", payload_name),
                 "--specpath", os.path.join(ROOT_DIR, "dist", "build", payload_name),
                 "--distpath", os.path.join(ROOT_DIR, payload_path if payload_path else "dist"),
-                "--add-data", f"{os.path.join(ROOT_DIR, "dist", "obfuscate", payload_name, "pyarmor_runtime_000000")}{os.pathsep}pyarmor_runtime_000000",
+                "--add-data", f"{os.path.join(ROOT_DIR, 'dist', 'obfuscate', payload_name, 'pyarmor_runtime_000000')}{os.pathsep}pyarmor_runtime_000000",
                 *(["--icon", payload_icon] if payload_icon and os.path.exists(payload_icon) else []),
                 *([f"--hidden-import={lib}" for lib in self._extract_imports(payload_source)["modules"]]),
                 os.path.join(ROOT_DIR, "dist", "obfuscate", payload_name, f"{payload_name}.py")
@@ -407,7 +407,7 @@ class PayloadManager():
 
             log_message(
                 log_level=LogLevel.SUCCESS, 
-                text=f"Payload build completed successfully! \nPayload saved to: {os.path.join(ROOT_DIR, payload_path if payload_path else "dist")}"
+                text=f"Payload build completed successfully! \nPayload saved to: {os.path.join(ROOT_DIR, payload_path if payload_path else 'dist')}"
             )
 
         except Exception as e:
@@ -416,6 +416,7 @@ class PayloadManager():
                 text=f"An unexpected error occurred while building payload ({payload_name}): {str(e)}"
             )
 
+    @task_handler
     def _generate_payload(self, payload_source: str, payload_name: str, payload_icon: str, payload_path: str, payload_variables: dict[str, any]) -> None:
         """
         Generates a Python program by replacing placeholders with specified values.
@@ -485,15 +486,15 @@ class PayloadManager():
         DESCRIPTION_FRAME_WIDTH: int = (DESCRIPTION_WIDTH + 2)
 
         clear()
-        print(f"╔{"═" * COMMAND_FRAME_WIDTH}╦{"═" * DESCRIPTION_FRAME_WIDTH}╗")
-        print(f"║{Color.BRIGHT_CYAN}{"COMMANDS":^{COMMAND_FRAME_WIDTH}}{Color.RESET}║{Color.BRIGHT_CYAN}{"DESCRIPTIONS":^{DESCRIPTION_FRAME_WIDTH}}{Color.RESET}║")
-        print(f"╠{"═" * COMMAND_FRAME_WIDTH}╬{"═" * DESCRIPTION_FRAME_WIDTH}╣")
+        print(f"╔{'═' * COMMAND_FRAME_WIDTH}╦{'═' * DESCRIPTION_FRAME_WIDTH}╗")
+        print(f"║{Color.BRIGHT_CYAN}{'COMMANDS':^{COMMAND_FRAME_WIDTH}}{Color.RESET}║{Color.BRIGHT_CYAN}{'DESCRIPTIONS':^{DESCRIPTION_FRAME_WIDTH}}{Color.RESET}║")
+        print(f"╠{'═' * COMMAND_FRAME_WIDTH}╬{'═' * DESCRIPTION_FRAME_WIDTH}╣")
 
         for index, (command, description) in enumerate(AVAILABLE_COMMANDS.items(), start=1):
             print(f"║[{Color.BRIGHT_CYAN}{index:02d}{Color.RESET}] {command:<{COMMAND_WIDTH}} : {description:<{DESCRIPTION_WIDTH}} ║")
 
-        print(f"╚{"═" * COMMAND_FRAME_WIDTH}╩{"═" * DESCRIPTION_FRAME_WIDTH}╝")
-        input(f"{Color.BRIGHT_CYAN}{">> Press ENTER to continue <<":^{COMMAND_FRAME_WIDTH + DESCRIPTION_FRAME_WIDTH}}{Color.RESET}\n")
+        print(f"╚{'═' * COMMAND_FRAME_WIDTH}╩{'═' * DESCRIPTION_FRAME_WIDTH}╝")
+        input(f"{Color.BRIGHT_CYAN}{'>> Press ENTER to continue <<':^{COMMAND_FRAME_WIDTH + DESCRIPTION_FRAME_WIDTH}}{Color.RESET}\n")
 
     def __payloads_menu(self, page: int) -> None:
         """
@@ -545,9 +546,9 @@ class PayloadManager():
                 return textwrap.wrap(text, width)
 
             clear()
-            print(f"╔{"═" * PAYLOAD_FRAME_WIDTH}╦{"═" * (PAYLOAD_DESCRIPTION_FRAME_WIDTH)}╗")
+            print(f"╔{'═' * PAYLOAD_FRAME_WIDTH}╦{'═' * (PAYLOAD_DESCRIPTION_FRAME_WIDTH)}╗")
             print(f"║{Color.BRIGHT_CYAN}{'PAYLOADS':^{PAYLOAD_FRAME_WIDTH}}{Color.RESET}║{Color.BRIGHT_CYAN}{'DESCRIPTIONS':^{PAYLOAD_DESCRIPTION_FRAME_WIDTH}}{Color.RESET}║")
-            print(f"╠{"═" * PAYLOAD_FRAME_WIDTH}╬{"═" * (PAYLOAD_DESCRIPTION_FRAME_WIDTH)}╣")
+            print(f"╠{'═' * PAYLOAD_FRAME_WIDTH}╬{'═' * (PAYLOAD_DESCRIPTION_FRAME_WIDTH)}╣")
 
             for index, payload in enumerate(page__payloads, start=GLOBAL_INDEX):
                 wrapped_lines: list[str] = []
@@ -557,14 +558,14 @@ class PayloadManager():
                 print(f"║[{Color.BRIGHT_CYAN}{index:02d}{Color.RESET}] {os.path.splitext(payload)[0]:<{PAYLOAD_WIDTH}} : {wrapped_lines[0]:<{PAYLOAD_DESCRIPTION_WIDTH}} ║")
 
                 for line in wrapped_lines[1:]:
-                    print(f"║{' ' * PAYLOAD_FRAME_WIDTH}║ {f"{line.lstrip()}":<{PAYLOAD_DESCRIPTION_WIDTH}} ║")
+                    print(f"║{' ' * PAYLOAD_FRAME_WIDTH}║ {f'{line.lstrip()}':<{PAYLOAD_DESCRIPTION_WIDTH}} ║")
 
-                print(f"╠{"═" * PAYLOAD_FRAME_WIDTH}╬{"═" * (PAYLOAD_DESCRIPTION_FRAME_WIDTH)}╣")
+                print(f"╠{'═' * PAYLOAD_FRAME_WIDTH}╬{'═' * (PAYLOAD_DESCRIPTION_FRAME_WIDTH)}╣")
 
-            print(f"║{Color.BRIGHT_CYAN}{f'HELP':^{PAYLOAD_FRAME_WIDTH}}{Color.RESET}║{' - Type "help" to show available commands.':<{PAYLOAD_DESCRIPTION_FRAME_WIDTH}}║")
-            print(f"╠{"═" * PAYLOAD_FRAME_WIDTH}╩{"═" * (PAYLOAD_DESCRIPTION_FRAME_WIDTH)}╣")
-            print(f"║{Color.BRIGHT_CYAN}{f"PAGE {page} of {len(self.__payloads.keys())}":^{PAYLOAD_FRAME_WIDTH + PAYLOAD_DESCRIPTION_FRAME_WIDTH}}{Color.RESET} ║")
-            print(f"╚{"═" * PAYLOAD_FRAME_WIDTH}═{"═" * (PAYLOAD_DESCRIPTION_FRAME_WIDTH)}╝")
+            print(f"║{Color.BRIGHT_CYAN}{f'HELP':^{PAYLOAD_FRAME_WIDTH}}{Color.RESET}║{' - Type `help` to show available commands.':<{PAYLOAD_DESCRIPTION_FRAME_WIDTH}}║")
+            print(f"╠{'═' * PAYLOAD_FRAME_WIDTH}╩{'═' * (PAYLOAD_DESCRIPTION_FRAME_WIDTH)}╣")
+            print(f"║{Color.BRIGHT_CYAN}{f'PAGE {page} of {len(self.__payloads.keys())}':^{PAYLOAD_FRAME_WIDTH + PAYLOAD_DESCRIPTION_FRAME_WIDTH}}{Color.RESET} ║")
+            print(f"╚{'═' * PAYLOAD_FRAME_WIDTH}═{'═' * (PAYLOAD_DESCRIPTION_FRAME_WIDTH)}╝")
 
         except ValueError:
             exit(
@@ -714,18 +715,18 @@ class PayloadManager():
         VALUE_FRAME_WIDTH: int = (VALUE_WIDTH + 2)    
 
         clear()
-        print(f"╔{"═" * VARIABLE_FRAME_WIDTH}═{"═" * VALUE_FRAME_WIDTH}╗")
+        print(f"╔{'═' * VARIABLE_FRAME_WIDTH}═{'═' * VALUE_FRAME_WIDTH}╗")
         print(f"║{Color.BRIGHT_CYAN}{TOOL_NAME:^{VARIABLE_FRAME_WIDTH + VALUE_FRAME_WIDTH}}{Color.RESET} ║")
-        print(f"╠{"═" * VARIABLE_FRAME_WIDTH}╦{"═" * VALUE_FRAME_WIDTH}╣")
+        print(f"╠{'═' * VARIABLE_FRAME_WIDTH}╦{'═' * VALUE_FRAME_WIDTH}╣")
 
         for variable in variables:
             truncate_var: str = truncate_text(getattr(self, variable.lower()), len(payload) if len(payload) >= VALUE_WIDTH else VALUE_WIDTH)
             print(f"║ {Color.BRIGHT_CYAN}{variable:<{VARIABLE_WIDTH}}{Color.RESET} : {truncate_var:<{VALUE_WIDTH}} ║")
 
-        print(f"╠{"═" * VARIABLE_FRAME_WIDTH}╬{"═" * VALUE_FRAME_WIDTH}╣")
-        print(f"║ {Color.BRIGHT_CYAN}{"PAYLOAD":<{VARIABLE_WIDTH}}{Color.RESET} : {payload:<{VALUE_WIDTH}} ║")
-        print(f"╠{"═" * VARIABLE_FRAME_WIDTH}╩{"═" * VALUE_FRAME_WIDTH}╣")
-        print(f"║ {Color.BRIGHT_CYAN}{"HINT":<{VARIABLE_FRAME_WIDTH + VALUE_FRAME_WIDTH}}{Color.RESET}║")
+        print(f"╠{'═' * VARIABLE_FRAME_WIDTH}╬{'═' * VALUE_FRAME_WIDTH}╣")
+        print(f"║ {Color.BRIGHT_CYAN}{'PAYLOAD':<{VARIABLE_WIDTH}}{Color.RESET} : {payload:<{VALUE_WIDTH}} ║")
+        print(f"╠{'═' * VARIABLE_FRAME_WIDTH}╩{'═' * VALUE_FRAME_WIDTH}╣")
+        print(f"║ {Color.BRIGHT_CYAN}{'HINT':<{VARIABLE_FRAME_WIDTH + VALUE_FRAME_WIDTH}}{Color.RESET}║")
 
         for description in [
             ' - Use "back" to go back.',
@@ -735,7 +736,7 @@ class PayloadManager():
         ]:
             print(f"║{description:<{VARIABLE_FRAME_WIDTH + VALUE_FRAME_WIDTH}} ║")
 
-        print(f"╚{"═" * VARIABLE_FRAME_WIDTH}═{"═" * VALUE_FRAME_WIDTH}╝")
+        print(f"╚{'═' * VARIABLE_FRAME_WIDTH}═{'═' * VALUE_FRAME_WIDTH}╝")
 
     def prepare_payload(self, payload: str) -> None:
         """

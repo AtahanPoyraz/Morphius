@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 
 from config.settings import OS_NAME, TOOL_NAME, Color, LogLevel
 
@@ -85,6 +86,28 @@ def interrupt_handler(func: callable) -> callable:
             exit(
                 log_level=LogLevel.NOTICE,
                 text=f"Signed out of {TOOL_NAME}"
+            )
+
+    return wrapper
+
+def task_handler(func: callable) -> callable:
+    def wrapper(*args, **kwargs):
+        start: float = time.time()
+        try:
+            return func(*args, **kwargs)
+
+        except Exception as e:
+            exit(
+                log_level=LogLevel.ERROR,
+                text=f"An error occurred: {e}"
+            )
+
+        finally:
+            end: float = time.time()
+            elapsed_time: float = end - start
+            log_message(
+                log_level=LogLevel.DEBUG,
+                text=f"Task ({func.__name__}) completed in {elapsed_time:.2f} seconds."
             )
 
     return wrapper
