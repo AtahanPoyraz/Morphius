@@ -53,7 +53,7 @@ pip3 install -r requirements.txt
 
 ### **3- Run the Morphius**
 ```bash
-python3 morphius.py
+python3 Morphius.py
 ```
 
 ## **Summary**

@@ -7,7 +7,6 @@ from itertools import cycle
 from typing import Iterable
 
 from config.settings import ROOT_DIR, LogLevel
-
 from utils.console_utils import exit, log_message
 
 def get_requirements() -> list[str] | list:

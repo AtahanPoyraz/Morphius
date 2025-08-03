@@ -1,0 +1,19 @@
+# .editorconfig kök dosya olduğunu belirtir
+root = true
+
+# Tüm dosyalar için genel kurallar
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+
+# Markdown dosyalarında boşluk silme kapalı (yoksa liste bozulur)
+[*.md]
+trim_trailing_whitespace = false
+
+# Makefile gibi dosyalarda TAB zorunludur
+[Makefile]
+indent_style = tab

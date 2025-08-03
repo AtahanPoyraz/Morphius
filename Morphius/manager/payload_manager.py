@@ -452,7 +452,7 @@ class PayloadManager():
             payload_path=payload_path,
         )
 
-    def _help(self) -> None:
+    def _help_menu(self) -> None:
         """
         Displays a formatted help menu showing available commands and their descriptions.
 
@@ -494,7 +494,7 @@ class PayloadManager():
         print(f"╚{'═' * COMMAND_FRAME_WIDTH}╩{'═' * DESCRIPTION_FRAME_WIDTH}╝")
         input(f"{Color.BRIGHT_CYAN}{'>> Press ENTER to continue <<':^{COMMAND_FRAME_WIDTH + DESCRIPTION_FRAME_WIDTH}}{Color.RESET}\n")
 
-    def __payloads_menu(self, page: int) -> None:
+    def _payloads_menu(self, page: int) -> None:
         """
         Displays the payloads menu in a formatted table, showing payload names and descriptions.
 
@@ -520,7 +520,7 @@ class PayloadManager():
 
             page__payloads: list[str] = self.__payloads.get(page, [])
             if not page__payloads:
-                return self.__payloads_menu(page=page - 1) if page > 1 else exit(log_level=LogLevel.ERROR, text="No payload found. Please ensure the payload exists and try again.")
+                return self._payloads_menu(page=page - 1) if page > 1 else exit(log_level=LogLevel.ERROR, text="No payload found. Please ensure the payload exists and try again.")
 
             # Calculate the maximum width of the payload names dynamically based on their lengths
             PAYLOAD_WIDTH: int = max([len(os.path.splitext(item)[0]) for sublist in self.__payloads.values() for item in sublist])
@@ -560,7 +560,7 @@ class PayloadManager():
 
                 print(f"╠{'═' * PAYLOAD_FRAME_WIDTH}╬{'═' * (PAYLOAD_DESCRIPTION_FRAME_WIDTH)}╣")
 
-            print(f"║{Color.BRIGHT_CYAN}{f'HELP':^{PAYLOAD_FRAME_WIDTH}}{Color.RESET}║{' - Type `help` to show available commands.':<{PAYLOAD_DESCRIPTION_FRAME_WIDTH}}║")
+            print(f"║{Color.BRIGHT_CYAN}{f'HELP':^{PAYLOAD_FRAME_WIDTH}}{Color.RESET}║{' Type `help` to show available commands.':<{PAYLOAD_DESCRIPTION_FRAME_WIDTH}}║")
             print(f"╠{'═' * PAYLOAD_FRAME_WIDTH}╩{'═' * (PAYLOAD_DESCRIPTION_FRAME_WIDTH)}╣")
             print(f"║{Color.BRIGHT_CYAN}{f'PAGE {page} of {len(self.__payloads.keys())}':^{PAYLOAD_FRAME_WIDTH + PAYLOAD_DESCRIPTION_FRAME_WIDTH}}{Color.RESET} ║")
             print(f"╚{'═' * PAYLOAD_FRAME_WIDTH}═{'═' * (PAYLOAD_DESCRIPTION_FRAME_WIDTH)}╝")
@@ -590,7 +590,7 @@ class PayloadManager():
         page: int = 1
         while True:
             try:
-                self.__payloads_menu(page=page)
+                self._payloads_menu(page=page)
 
                 print(UPPER_FLAG)
                 option: str = input(DOWN_FLAG)
@@ -600,7 +600,7 @@ class PayloadManager():
 
                         if option.split(" ")[1].isdigit() and int(option.split(" ")[1]) > 0:
                             if 0 <= int(option.split(" ")[1]) - 1 < len(all__payloads):
-                                self.prepare_payload(
+                                self._prepare_payload(
                                     payload=os.path.join(self.__payloads_directory, all__payloads[int(option.split(" ")[1]) - 1])
                                 )
                                 break
@@ -614,7 +614,7 @@ class PayloadManager():
                                 continue
 
                         elif " ".join(option.split(" ")[1:]).strip() in [os.path.splitext(payload)[0] for payload in all__payloads]:
-                            self.prepare_payload(
+                            self._prepare_payload(
                                 payload=os.path.join(
                                     self.__payloads_directory, 
                                     next(
@@ -645,7 +645,7 @@ class PayloadManager():
                             continue
 
                     case option if option.lower() == "help":
-                        self._help()
+                        self._help_menu()
                         continue
 
                     case option if option.lower() == "exit":
@@ -675,6 +675,56 @@ class PayloadManager():
                     log_level=LogLevel.ERROR, 
                     text="An error occurred while selecting option."
                 )
+
+    def _help_prepare(self) -> None:
+        """
+        Displays a formatted help menu showing available commands and their descriptions.
+
+        This function constructs a table-like structure with two columns:
+        - "COMMANDS": Lists the commands that can be used.
+        - "DESCRIPTIONS": Provides a short explanation of what each command does.
+
+        The output is styled with color and borders for better readability.
+        After displaying the menu, it waits for user input to proceed.
+        """
+        [
+            ' - Use "back" to go back.',
+            ' - Use "exit" to exit program.',
+            ' - Use "set [parameter] [value]" to update values.',
+            ' - Use "generate" to create the payload with current settings.'
+        ]
+
+        # Dictionary of available commands and their descriptions for navigating and using payloads.
+        AVAILABLE_COMMANDS: dict[str, str] = {
+            "'back'"                    : "Go back to the previous menu.",
+            "'exit'"                    : "Exit the program.",
+            "'set [parameter] [value]'" : "Set a variable to a specific value.",
+            "'generate'"                : "Generate the payload with current settings.",
+        }
+
+        # Calculate the maximum width of the command names dynamically based on their lengths
+        COMMAND_WIDTH: int = max(len(command) for command in AVAILABLE_COMMANDS)
+
+        # Add 2 to the command width to account for padding and frame borders
+        COMMAND_FRAME_WIDTH: int = (COMMAND_WIDTH + 6)
+
+        # Calculate the maximum width of the descriptions based on their longest entry
+        DESCRIPTION_WIDTH: int = max(len(description) for description in AVAILABLE_COMMANDS.values())
+
+        # Add 2 to the description width to ensure proper padding and frame borders
+        DESCRIPTION_FRAME_WIDTH: int = (DESCRIPTION_WIDTH + 2)
+
+        clear()
+        print(f"╔{'═' * COMMAND_FRAME_WIDTH}╦{'═' * DESCRIPTION_FRAME_WIDTH}╗")
+        print(f"║{Color.BRIGHT_CYAN}{'COMMANDS':^{COMMAND_FRAME_WIDTH}}{Color.RESET}║{Color.BRIGHT_CYAN}{'DESCRIPTIONS':^{DESCRIPTION_FRAME_WIDTH}}{Color.RESET}║")
+        print(f"╠{'═' * COMMAND_FRAME_WIDTH}╬{'═' * DESCRIPTION_FRAME_WIDTH}╣")
+
+        for index, (command, description) in enumerate(AVAILABLE_COMMANDS.items(), start=1):
+            print(f"║[{Color.BRIGHT_CYAN}{index:02d}{Color.RESET}] {command:<{COMMAND_WIDTH}} : {description:<{DESCRIPTION_WIDTH}} ║")
+
+        print(f"╚{'═' * COMMAND_FRAME_WIDTH}╩{'═' * DESCRIPTION_FRAME_WIDTH}╝")
+        input(f"{Color.BRIGHT_CYAN}{'>> Press ENTER to continue <<':^{COMMAND_FRAME_WIDTH + DESCRIPTION_FRAME_WIDTH}}{Color.RESET}\n")
+
 
     def _preparation_menu(self, payload: str, variables: list[str]) -> None:
         """
@@ -722,21 +772,12 @@ class PayloadManager():
             print(f"║ {Color.BRIGHT_CYAN}{variable:<{VARIABLE_WIDTH}}{Color.RESET} : {truncate_var:<{VALUE_WIDTH}} ║")
 
         print(f"╠{'═' * VARIABLE_FRAME_WIDTH}╬{'═' * VALUE_FRAME_WIDTH}╣")
-        print(f"║ {Color.BRIGHT_CYAN}{'PAYLOAD':<{VARIABLE_WIDTH}}{Color.RESET} : {payload:<{VALUE_WIDTH}} ║")
+        print(f"║ {Color.BRIGHT_CYAN}{'PAYLOAD':^{VARIABLE_WIDTH}}{Color.RESET} : {payload:<{VALUE_WIDTH}} ║")
         print(f"╠{'═' * VARIABLE_FRAME_WIDTH}╩{'═' * VALUE_FRAME_WIDTH}╣")
-        print(f"║ {Color.BRIGHT_CYAN}{'HINT':<{VARIABLE_FRAME_WIDTH + VALUE_FRAME_WIDTH}}{Color.RESET}║")
-
-        for description in [
-            ' - Use "back" to go back.',
-            ' - Use "exit" to exit program.',
-            ' - Use "set [parameter] [value]" to update values.',
-            ' - Use "generate" to create the payload with current settings.'
-        ]:
-            print(f"║{description:<{VARIABLE_FRAME_WIDTH + VALUE_FRAME_WIDTH}} ║")
-
+        print(f"║{Color.BRIGHT_CYAN}{f'HELP':^{VARIABLE_FRAME_WIDTH}}{Color.RESET}║{' Type `help` to show available commands.':<{VALUE_FRAME_WIDTH}}║")
         print(f"╚{'═' * VARIABLE_FRAME_WIDTH}═{'═' * VALUE_FRAME_WIDTH}╝")
 
-    def prepare_payload(self, payload: str) -> None:
+    def _prepare_payload(self, payload: str) -> None:
         """
         Prepares the selected payload and handles user interactions in a loop until 'exit' is selected.
 
@@ -803,8 +844,12 @@ class PayloadManager():
                     )
                     break
 
+                case option if option.lower().strip() == "help":
+                    self._help_prepare()
+                    continue
+
                 case option if option.lower().strip() == "back":
-                    getattr(importlib.import_module('morphius'), "Morphius")().main()
+                    getattr(importlib.import_module('Morphius'), "Morphius")().main()
                     break
 
                 case option if option.lower().strip() == "exit":

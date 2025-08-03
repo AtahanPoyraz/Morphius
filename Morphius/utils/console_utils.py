@@ -91,6 +91,16 @@ def interrupt_handler(func: callable) -> callable:
     return wrapper
 
 def task_handler(func: callable) -> callable:
+    """
+    A decorator to measure the execution time of a function and handle exceptions.
+
+    This decorator wraps a function to log its execution time and handle any exceptions that may occur during its execution.
+    Args:
+
+        func (callable): The function to be wrapped by the decorator.
+    Returns:
+        callable: The wrapped function with added execution time logging and exception handling.
+    """
     def wrapper(*args, **kwargs):
         start: float = time.time()
         try:
