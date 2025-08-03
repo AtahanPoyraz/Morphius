@@ -725,7 +725,6 @@ class PayloadManager():
         print(f"╚{'═' * COMMAND_FRAME_WIDTH}╩{'═' * DESCRIPTION_FRAME_WIDTH}╝")
         input(f"{Color.BRIGHT_CYAN}{'>> Press ENTER to continue <<':^{COMMAND_FRAME_WIDTH + DESCRIPTION_FRAME_WIDTH}}{Color.RESET}\n")
 
-
     def _preparation_menu(self, payload: str, variables: list[str]) -> None:
         """
         Displays the preparation menu with payload details and instructions.
