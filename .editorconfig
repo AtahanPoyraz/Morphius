@@ -1,19 +1,20 @@
-# .editorconfig kök dosya olduğunu belirtir
+# Indicates that this is the root EditorConfig file
 root = true
 
-# Tüm dosyalar için genel kurallar
+# General settings applied to all files
 [*]
-charset = utf-8
-end_of_line = lf
-insert_final_newline = true
-indent_style = space
-indent_size = 4
-trim_trailing_whitespace = true
+charset = utf-8                      # Use UTF-8 character encoding
+end_of_line = lf                    # Use LF for line endings (Unix style)
+insert_final_newline = true         # Ensure file ends with a newline
+indent_style = space                # Use spaces for indentation
+indent_size = 4                    # Indent using 4 spaces
+trim_trailing_whitespace = true    # Remove any trailing whitespace at line ends
 
-# Markdown dosyalarında boşluk silme kapalı (yoksa liste bozulur)
+# For Markdown files, do not trim trailing whitespace
+# (To preserve formatting such as lists and tables)
 [*.md]
 trim_trailing_whitespace = false
 
-# Makefile gibi dosyalarda TAB zorunludur
+# For Makefiles, tabs are required for indentation
 [Makefile]
 indent_style = tab
