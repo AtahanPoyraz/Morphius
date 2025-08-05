@@ -452,7 +452,7 @@ class PayloadManager():
             payload_path=payload_path,
         )
 
-    def _help_menu(self) -> None:
+    def _help(self, commands: dict[str, str]) -> None:
         """
         Displays a formatted help menu showing available commands and their descriptions.
 
@@ -463,22 +463,14 @@ class PayloadManager():
         The output is styled with color and borders for better readability.
         After displaying the menu, it waits for user input to proceed.
         """
-
-        # Dictionary of available commands and their descriptions for navigating and using payloads.
-        AVAILABLE_COMMANDS: dict[str, str] = {
-            '"use [payload_name]" / "use [payload_number]"': "Select a specific payload by name or number.",
-            '"page [page_number]"'                         : "Navigate to a specific page of payloads.",
-            '"exit"'                                       : "Exit the program.",
-        }
-
         # Calculate the maximum width of the command names dynamically based on their lengths
-        COMMAND_WIDTH: int = max(len(command) for command in AVAILABLE_COMMANDS)
+        COMMAND_WIDTH: int = max(len(command) for command in commands)
 
         # Add 2 to the command width to account for padding and frame borders
         COMMAND_FRAME_WIDTH: int = (COMMAND_WIDTH + 6)
 
         # Calculate the maximum width of the descriptions based on their longest entry
-        DESCRIPTION_WIDTH: int = max(len(description) for description in AVAILABLE_COMMANDS.values())
+        DESCRIPTION_WIDTH: int = max(len(description) for description in commands.values())
 
         # Add 2 to the description width to ensure proper padding and frame borders
         DESCRIPTION_FRAME_WIDTH: int = (DESCRIPTION_WIDTH + 2)
@@ -488,7 +480,7 @@ class PayloadManager():
         print(f"║{Color.BRIGHT_CYAN}{'COMMANDS':^{COMMAND_FRAME_WIDTH}}{Color.RESET}║{Color.BRIGHT_CYAN}{'DESCRIPTIONS':^{DESCRIPTION_FRAME_WIDTH}}{Color.RESET}║")
         print(f"╠{'═' * COMMAND_FRAME_WIDTH}╬{'═' * DESCRIPTION_FRAME_WIDTH}╣")
 
-        for index, (command, description) in enumerate(AVAILABLE_COMMANDS.items(), start=1):
+        for index, (command, description) in enumerate(commands.items(), start=1):
             print(f"║[{Color.BRIGHT_CYAN}{index:02d}{Color.RESET}] {command:<{COMMAND_WIDTH}} : {description:<{DESCRIPTION_WIDTH}} ║")
 
         print(f"╚{'═' * COMMAND_FRAME_WIDTH}╩{'═' * DESCRIPTION_FRAME_WIDTH}╝")
@@ -587,6 +579,13 @@ class PayloadManager():
             - Handles invalid inputs gracefully, with warnings and retries.
             - Errors are logged with appropriate messages for better debugging.
         """
+        AVAILABLE_COMMANDS: dict[str, str] = {
+            '"use [payload_name]" / "use [payload_number]"': "Select a specific payload by name or number.",
+            '"page [page_number]"'                         : "Navigate to a specific page of payloads.",
+            '"exit"'                                       : "Exit the program.",
+            '"help"'                                       : "Show this help menu."
+        }
+
         page: int = 1
         while True:
             try:
@@ -645,7 +644,7 @@ class PayloadManager():
                             continue
 
                     case option if option.lower() == "help":
-                        self._help_menu()
+                        self._help(commands=AVAILABLE_COMMANDS)
                         continue
 
                     case option if option.lower() == "exit":
@@ -654,7 +653,7 @@ class PayloadManager():
                             text=f"Signed out of {TOOL_NAME}."
                         )
 
-                    case _:
+                    case option if not option.lower().strip() in AVAILABLE_COMMANDS:
                         log_message(
                             log_level=LogLevel.WARNING,
                             text="Invalid option. Please try again."
@@ -675,55 +674,6 @@ class PayloadManager():
                     log_level=LogLevel.ERROR, 
                     text="An error occurred while selecting option."
                 )
-
-    def _help_prepare(self) -> None:
-        """
-        Displays a formatted help menu showing available commands and their descriptions.
-
-        This function constructs a table-like structure with two columns:
-        - "COMMANDS": Lists the commands that can be used.
-        - "DESCRIPTIONS": Provides a short explanation of what each command does.
-
-        The output is styled with color and borders for better readability.
-        After displaying the menu, it waits for user input to proceed.
-        """
-        [
-            ' - Use "back" to go back.',
-            ' - Use "exit" to exit program.',
-            ' - Use "set [parameter] [value]" to update values.',
-            ' - Use "generate" to create the payload with current settings.'
-        ]
-
-        # Dictionary of available commands and their descriptions for navigating and using payloads.
-        AVAILABLE_COMMANDS: dict[str, str] = {
-            "'back'"                    : "Go back to the previous menu.",
-            "'exit'"                    : "Exit the program.",
-            "'set [parameter] [value]'" : "Set a variable to a specific value.",
-            "'generate'"                : "Generate the payload with current settings.",
-        }
-
-        # Calculate the maximum width of the command names dynamically based on their lengths
-        COMMAND_WIDTH: int = max(len(command) for command in AVAILABLE_COMMANDS)
-
-        # Add 2 to the command width to account for padding and frame borders
-        COMMAND_FRAME_WIDTH: int = (COMMAND_WIDTH + 6)
-
-        # Calculate the maximum width of the descriptions based on their longest entry
-        DESCRIPTION_WIDTH: int = max(len(description) for description in AVAILABLE_COMMANDS.values())
-
-        # Add 2 to the description width to ensure proper padding and frame borders
-        DESCRIPTION_FRAME_WIDTH: int = (DESCRIPTION_WIDTH + 2)
-
-        clear()
-        print(f"╔{'═' * COMMAND_FRAME_WIDTH}╦{'═' * DESCRIPTION_FRAME_WIDTH}╗")
-        print(f"║{Color.BRIGHT_CYAN}{'COMMANDS':^{COMMAND_FRAME_WIDTH}}{Color.RESET}║{Color.BRIGHT_CYAN}{'DESCRIPTIONS':^{DESCRIPTION_FRAME_WIDTH}}{Color.RESET}║")
-        print(f"╠{'═' * COMMAND_FRAME_WIDTH}╬{'═' * DESCRIPTION_FRAME_WIDTH}╣")
-
-        for index, (command, description) in enumerate(AVAILABLE_COMMANDS.items(), start=1):
-            print(f"║[{Color.BRIGHT_CYAN}{index:02d}{Color.RESET}] {command:<{COMMAND_WIDTH}} : {description:<{DESCRIPTION_WIDTH}} ║")
-
-        print(f"╚{'═' * COMMAND_FRAME_WIDTH}╩{'═' * DESCRIPTION_FRAME_WIDTH}╝")
-        input(f"{Color.BRIGHT_CYAN}{'>> Press ENTER to continue <<':^{COMMAND_FRAME_WIDTH + DESCRIPTION_FRAME_WIDTH}}{Color.RESET}\n")
 
     def _preparation_menu(self, payload: str, variables: list[str]) -> None:
         """
@@ -789,6 +739,13 @@ class PayloadManager():
             - Displays the preparation menu.
             - Handles user commands like 'set', 'back', 'generate' and 'exit'.
         """
+        AVAILABLE_COMMANDS: dict[str, str] = {
+            '"set [variable_name] [value]"': "Set the value for a specific variable.",
+            '"back"'                        : "Go back to the payload selection menu.",
+            '"generate"'                    : "Generate the payload with the current settings.",
+            '"exit"'                        : "Exit the program."
+        }
+
         while True:
             variables: list[str] = self._extract_placeholders(payload)
             if len(variables) == 0:
@@ -844,7 +801,7 @@ class PayloadManager():
                     break
 
                 case option if option.lower().strip() == "help":
-                    self._help_prepare()
+                    self._help(commands=AVAILABLE_COMMANDS)
                     continue
 
                 case option if option.lower().strip() == "back":
@@ -857,7 +814,7 @@ class PayloadManager():
                         text=f"Signed out of {TOOL_NAME}."
                     )
 
-                case _:
+                case option if not option.lower().strip() in AVAILABLE_COMMANDS:
                     log_message(
                         log_level=LogLevel.WARNING, 
                         text="Please enter a valid input."

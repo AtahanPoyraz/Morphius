@@ -15,7 +15,7 @@ exclude =
 
 ignore =
     E203, E302, E305, E501,
-    W503, W291,
+    W291, W503, W605
 
 max-complexity = 10
 

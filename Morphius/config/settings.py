@@ -128,7 +128,21 @@ MACHINE: str = platform.machine()
 # The version of Python currently being used.
 PYTHON_VERSION: str = platform.python_version()
 
+# The banner that appears when the tool is started, formatted with the tool name and colors.
+BANNER: str = """
+  \\  |                 |    _)           
+ |\\/ |   _ \\   _| _ \    \\   |  |  | (_-<
+_|  _| \\___/ _|  .__/ _| _| _| \\_,_| ___/
+                _|                        
+"""
+
 # The flag or prompt string that appears when the application is waiting for user input.
 UPPER_FLAG: str = f"╭{Color.BRIGHT_CYAN}─{Color.CYAN}─{Color.BRIGHT_BLUE}{{{Color.BRIGHT_CYAN}{TOOL_NAME}{Color.BRIGHT_BLUE}}}{Color.RESET}"
 
 DOWN_FLAG: str = f"╰{Color.BRIGHT_CYAN}─{Color.CYAN}─{Color.BRIGHT_BLUE}>{Color.RESET} "
+
+# The URL of the repository where the tool is hosted, typically on GitHub.
+REPOSITORY_URL: str = "https://github.com/AtahanPoyraz/Morphius"
+
+# The email address of the author for contact or support purposes.
+AUTHOR_EMAIL: str = "atahanpoyraz@gmail.com"

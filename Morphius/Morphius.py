@@ -3,10 +3,13 @@ import time
 
 from config.settings import (
     AUTHOR,
-    PYTHON_VERSION,
-    TOOL_NAME,
-    TOOL_VERSION,
+    AUTHOR_EMAIL,
+    BANNER,
+    Color,
     LogLevel,
+    PYTHON_VERSION,
+    REPOSITORY_URL,
+    TOOL_VERSION,
 )
 
 from manager.payload_manager import PayloadManager
@@ -28,7 +31,12 @@ class Morphius(PayloadManager):
         """
         try:
             clear()
-            print(f"{TOOL_NAME} {TOOL_VERSION} Developed by {AUTHOR}")            
+            print(f"""{Color.BRIGHT_CYAN}{BANNER}{Color.RESET}
+                \rVersion   : {TOOL_VERSION}
+                \rAuthor    : {AUTHOR}
+                \rContact   : {AUTHOR_EMAIL}
+                \rRepository: {REPOSITORY_URL}
+            """)
             missing_libraries: list[str] = check_requirements()
 
             if float(".".join(PYTHON_VERSION.split('.')[:-1])) <= 3.12:
