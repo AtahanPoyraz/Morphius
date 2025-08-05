@@ -101,7 +101,7 @@ class LogLevel(Enum):
 TOOL_NAME: str = "Morphius"
 
 # The version of tool.
-TOOL_VERSION: str = "1.0.0"
+TOOL_VERSION: str = "v1.0.0"
 
 # The author of tool.
 AUTHOR: str = "AtahanPoyraz"
