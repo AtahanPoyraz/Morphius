@@ -653,7 +653,7 @@ class PayloadManager():
                             text=f"Signed out of {TOOL_NAME}."
                         )
 
-                    case option if not option.lower().strip() in AVAILABLE_COMMANDS:
+                    case _:
                         log_message(
                             log_level=LogLevel.WARNING,
                             text="Invalid option. Please try again."
@@ -814,7 +814,7 @@ class PayloadManager():
                         text=f"Signed out of {TOOL_NAME}."
                     )
 
-                case option if not option.lower().strip() in AVAILABLE_COMMANDS:
+                case _:
                     log_message(
                         log_level=LogLevel.WARNING, 
                         text="Please enter a valid input."
