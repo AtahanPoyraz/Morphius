@@ -580,10 +580,10 @@ class PayloadManager():
             - Errors are logged with appropriate messages for better debugging.
         """
         AVAILABLE_COMMANDS: dict[str, str] = {
-            '"use [payload_name]" / "use [payload_number]"': "Select a specific payload by name or number.",
-            '"page [page_number]"'                         : "Navigate to a specific page of payloads.",
-            '"exit"'                                       : "Exit the program.",
-            '"help"'                                       : "Show this help menu."
+            '"use [payload_name]" / "use [payload_number]"' : "Select a specific payload by name or number.",
+            '"page [page_number]"'                          : "Navigate to a specific page of payloads.",
+            '"exit"'                                        : "Exit the program.",
+            '"help"'                                        : "Show this help menu."
         }
 
         page: int = 1
@@ -740,7 +740,7 @@ class PayloadManager():
             - Handles user commands like 'set', 'back', 'generate' and 'exit'.
         """
         AVAILABLE_COMMANDS: dict[str, str] = {
-            '"set [variable_name] [value]"': "Set the value for a specific variable.",
+            '"set [variable_name] [value]"' : "Set the value for a specific variable.",
             '"back"'                        : "Go back to the payload selection menu.",
             '"generate"'                    : "Generate the payload with the current settings.",
             '"exit"'                        : "Exit the program."
