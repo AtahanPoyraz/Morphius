@@ -191,7 +191,7 @@ class PayloadManager():
 
         return descriptions
 
-    def _extract_imports(self, payload_path: str) -> dict[str, list[str]]:
+    def _extract_imports(self, payload_path: str) -> set[str]:
         """
         This function extracts all import statements (both standard and from module) from a Python file,
         categorizes them into modules and imported items, and returns them in a sorted manner.
@@ -205,7 +205,6 @@ class PayloadManager():
                 - "imported_items": A list of unique imported item names (including aliases) sorted alphabetically.
         """
         imported_items: set[str] = set()
-        imported_modules: set[str] = set()
 
         with open(payload_path, "r", encoding="UTF-8") as file:                        
             for node in ast.parse(file.read()).body:
@@ -215,15 +214,14 @@ class PayloadManager():
                         imported_items.add(alias.asname)
 
                 elif isinstance(node, ast.ImportFrom):  
-                    imported_modules.add(node.module)
+                    imported_items.add(node.module)
                     for alias in node.names:
                         imported_items.add(alias.name)
                         imported_items.add(alias.asname)
 
             imported_items.discard(None)
-            imported_modules.discard(None)
 
-        return {"modules": list(sorted(imported_modules)), "items": list(sorted(imported_items))}
+        return imported_items
 
     def _extract_placeholders(self, payload: str) -> list[str]:
         """
@@ -392,7 +390,7 @@ class PayloadManager():
                 "--distpath", os.path.join(ROOT_DIR, payload_path if payload_path else "dist"),
                 "--add-data", f"{os.path.join(ROOT_DIR, 'dist', 'obfuscate', payload_name, 'pyarmor_runtime_000000')}{os.pathsep}pyarmor_runtime_000000",
                 *(["--icon", payload_icon] if payload_icon and os.path.exists(payload_icon) else []),
-                *([f"--hidden-import={lib}" for lib in self._extract_imports(payload_source)["modules"]]),
+                *([f"--hidden-import={lib}" for lib in self._extract_imports(payload_source)]),
                 os.path.join(ROOT_DIR, "dist", "obfuscate", payload_name, f"{payload_name}.py")
             ])
 

